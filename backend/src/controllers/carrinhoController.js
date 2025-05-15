@@ -6,6 +6,10 @@ module.exports = {
     try {
       const { clienteId } = req.params;
 
+      if (req.user.id !== Number(clienteId)) {
+        return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
+      }
+
       let carrinho = await Carrinho.findOne({
         where: { clienteId },
         include: {
@@ -28,6 +32,11 @@ module.exports = {
   async adicionarItem(req, res) {
     try {
       const { clienteId } = req.params;
+      
+      if (req.user.id !== Number(clienteId)) {
+        return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
+      }
+
       const { produtoId, quantidade } = req.body;
 
       let carrinho = await Carrinho.findOne({ where: { clienteId } });
@@ -59,6 +68,11 @@ module.exports = {
   async atualizarItem(req, res) {
     try {
       const { clienteId, itemId } = req.params;
+      
+      if (req.user.id !== Number(clienteId)) {
+        return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
+      }
+
       const { quantidade } = req.body;
 
       const carrinho = await Carrinho.findOne({ where: { clienteId } });
@@ -81,6 +95,10 @@ module.exports = {
     try {
       const { clienteId, itemId } = req.params;
 
+      if (req.user.id !== Number(clienteId)) {
+        return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
+      }
+
       const carrinho = await Carrinho.findOne({ where: { clienteId } });
       if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });
 
@@ -98,6 +116,10 @@ module.exports = {
   async limparCarrinho(req, res) {
     try {
       const { clienteId } = req.params;
+
+      if (req.user.id !== Number(clienteId)) {
+        return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
+      }
 
       const carrinho = await Carrinho.findOne({ where: { clienteId } });
       if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });

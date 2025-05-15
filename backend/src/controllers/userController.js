@@ -61,7 +61,9 @@ module.exports = {
   async atualizar(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
-      if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
+      if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
+        return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
+      }
 
       const campos = ['nome', 'email', 'senha', 'tipo'];
       campos.forEach(campo => {
@@ -79,8 +81,10 @@ module.exports = {
   async remover(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
-      if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
-
+      if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
+        return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
+      }
+      
       await user.destroy();
       res.json({ mensagem: 'Usuário removido com sucesso' });
     } catch (error) {

@@ -30,9 +30,31 @@ module.exports = {
   // Listar todos os pedidos com detalhes
   async listar(req, res) {
     try {
-      const pedidos = await Pedido.findAll({
-        include: [Restaurante, ModoPagamento, { model: User, as: 'cliente' }, { model: ItemPedido, include: Produto }]
-      });
+      let pedidos;
+
+      if (req.user.tipo === 'cliente') {
+        pedidos = await Pedido.findAll({
+          where: { clienteId: req.user.id },
+          include: [Restaurante, ModoPagamento, { model: User, as: 'cliente' }, { model: ItemPedido, include: Produto }]
+        });
+      } else if (req.user.tipo === 'empresa') {
+        pedidos = await Pedido.findAll({
+          include: [
+            {
+              model: Restaurante,
+              where: { userId: req.user.id }
+            },
+            ModoPagamento,
+            { model: User, as: 'cliente' },
+            { model: ItemPedido, include: Produto }
+          ]
+        });
+      } else {
+        pedidos = await Pedido.findAll({
+          include: [Restaurante, ModoPagamento, { model: User, as: 'cliente' }, { model: ItemPedido, include: Produto }]
+        });
+      }
+
       res.json(pedidos);
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao listar pedidos' });
@@ -45,7 +67,20 @@ module.exports = {
       const pedido = await Pedido.findByPk(req.params.id, {
         include: [Restaurante, ModoPagamento, { model: User, as: 'cliente' }, { model: ItemPedido, include: Produto }]
       });
+
       if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+
+      if (req.user.tipo === 'cliente' && pedido.clienteId !== req.user.id) {
+        return res.status(403).json({ erro: 'Acesso negado a este pedido' });
+      }
+
+      if (req.user.tipo === 'empresa') {
+        const restaurante = await Restaurante.findByPk(pedido.RestauranteId);
+        if (restaurante.userId !== req.user.id) {
+          return res.status(403).json({ erro: 'Acesso negado a este pedido' });
+        }
+      }
+
       res.json(pedido);
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao buscar pedido' });

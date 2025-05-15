@@ -12,6 +12,11 @@ module.exports = {
         return res.status(404).json({ erro: 'Pedido não encontrado para avaliação' });
       }
 
+      // Verifica se o pedido pertence ao usuário autenticado
+      if (pedido.clienteId !== req.user.id) {
+        return res.status(403).json({ erro: 'Você só pode avaliar pedidos feitos por você' });
+      }
+
       // Verifica se já existe avaliação para esse pedido
       const avalExistente = await Avaliacao.findOne({ where: { PedidoId } });
       if (avalExistente) {
