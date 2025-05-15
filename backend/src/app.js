@@ -18,6 +18,9 @@ app.use('/avaliacoes', avaliacaoRoutes);
 const carrinhoRoutes = require('./routes/carrinhoRoutes');
 app.use('/carrinho', carrinhoRoutes);
 
+const modoPagamentoRoutes = require('./routes/modoPagamentoRoutes');
+app.use('/modos-pagamento', modoPagamentoRoutes);
+
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 
 module.exports = app;
