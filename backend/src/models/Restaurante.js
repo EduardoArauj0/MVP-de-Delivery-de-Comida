@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./User');
 
 const Restaurante = sequelize.define('Restaurante', {
   nome: DataTypes.STRING,
@@ -8,4 +9,5 @@ const Restaurante = sequelize.define('Restaurante', {
   endereco: DataTypes.STRING
 });
 
+Restaurante.belongsTo(User, { as: 'empresa' });
 module.exports = Restaurante;
