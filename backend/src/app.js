@@ -12,6 +12,9 @@ app.use('/produtos', produtoRoutes);
 const pedidoRoutes = require('./routes/pedidoRoutes');
 app.use('/pedidos', pedidoRoutes);
 
+const avaliacaoRoutes = require('./routes/avaliacaoRoutes');
+app.use('/avaliacoes', avaliacaoRoutes);
+
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 
 module.exports = app;
