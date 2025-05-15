@@ -1,5 +1,6 @@
 const app = require('./src/app');
 const { sequelize } = require('./src/models');
+const seedDatabase = require('./src/seeders/seed');
 
 const PORT = process.env.PORT || 3000;
 
@@ -16,5 +17,22 @@ async function start() {
     console.error('Erro ao conectar ao banco:', error);
   }
 }
+
+async function start() {
+  try {
+    await sequelize.authenticate();
+    console.log('Conectado ao banco com sucesso!');
+    await sequelize.sync({ alter: true });
+
+    await seedDatabase();
+
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando na porta ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Erro ao conectar ao banco:', error);
+  }
+}
+
 
 start();
