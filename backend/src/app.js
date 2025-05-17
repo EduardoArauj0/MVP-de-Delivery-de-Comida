@@ -1,7 +1,10 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const restauranteRoutes = require('./routes/restauranteRoutes');
 app.use('/restaurantes', restauranteRoutes);
@@ -23,6 +26,9 @@ app.use('/modos-pagamento', modoPagamentoRoutes);
 
 const userRoutes = require('./routes/userRoutes');
 app.use('/users', userRoutes);
+
+const uploadRoutes = require('./routes/uploadRoutes');
+app.use('/upload', uploadRoutes);
 
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 
