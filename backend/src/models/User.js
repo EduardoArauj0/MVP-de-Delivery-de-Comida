@@ -6,7 +6,7 @@ const User = sequelize.define('User', {
   nome: DataTypes.STRING,
   email: { type: DataTypes.STRING, unique: true },
   senha: DataTypes.STRING,
-  tipo: { type: DataTypes.ENUM('cliente', 'admin'), defaultValue: 'cliente' }
+  tipo: { type: DataTypes.ENUM('cliente', 'empresa', 'admin'), defaultValue: 'cliente' }
 });
 
 // Hash da senha antes de salvar
