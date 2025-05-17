@@ -19,7 +19,7 @@ async function startServer() {
       await seedDatabase();
 
       app.listen(PORT, () => {
-        console.log(`🚀 Servidor rodando na porta ${PORT}`);
+        console.log(`Servidor rodando na porta ${PORT}`);
       });
 
       break; // conexão feita com sucesso, sai do loop

@@ -10,8 +10,4 @@ router.put('/:clienteId/itens/:itemId', autenticar, authorizeRole('cliente'), co
 router.delete('/:clienteId/itens/:itemId', autenticar, authorizeRole('cliente'), controller.removerItem);
 router.delete('/:clienteId', autenticar, authorizeRole('cliente'), controller.limparCarrinho);
 
-if (req.user.id !== Number(req.params.clienteId)) {
-  return res.status(403).json({ erro: 'Acesso negado ao carrinho de outro usuário' });
-}
-
 module.exports = router;

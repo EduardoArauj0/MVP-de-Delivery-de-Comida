@@ -41,7 +41,7 @@ async function seedDatabase() {
 
   await Produto.bulkCreate(produtos);
 
-  console.log('✅ Seed executado com sucesso!');
+  console.log('Seed executado com sucesso!');
 }
 
 module.exports = seedDatabase;
