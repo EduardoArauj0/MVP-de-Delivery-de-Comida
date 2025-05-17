@@ -11,6 +11,10 @@ module.exports = {
         return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
 
+      if (restaurante.empresaId !== req.user.id) {
+        return res.status(403).json({ erro: 'Você não tem permissão para adicionar produtos a este restaurante' });
+      }
+
       const novoProduto = await Produto.create({ nome, descricao, imagem, preco, RestauranteId });
       res.status(201).json(novoProduto);
     } catch (error) {
@@ -45,6 +49,11 @@ module.exports = {
       const produto = await Produto.findByPk(req.params.id);
       if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
 
+      const restaurante = await Restaurante.findByPk(produto.RestauranteId);
+      if (restaurante.empresaId !== req.user.id) {
+        return res.status(403).json({ erro: 'Você não tem permissão para editar este produto' });
+      }
+
       await produto.update(req.body);
       res.json(produto);
     } catch (error) {
@@ -57,6 +66,11 @@ module.exports = {
     try {
       const produto = await Produto.findByPk(req.params.id);
       if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
+
+      const restaurante = await Restaurante.findByPk(produto.RestauranteId);
+      if (restaurante.empresaId !== req.user.id) {
+        return res.status(403).json({ erro: 'Você não tem permissão para remover este produto' });
+      }
 
       await produto.destroy();
       res.json({ mensagem: 'Produto removido com sucesso' });

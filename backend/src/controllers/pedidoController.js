@@ -42,7 +42,7 @@ module.exports = {
           include: [
             {
               model: Restaurante,
-              where: { userId: req.user.id }
+              where: { empresaId: req.user.id }
             },
             ModoPagamento,
             { model: User, as: 'cliente' },
@@ -76,7 +76,7 @@ module.exports = {
 
       if (req.user.tipo === 'empresa') {
         const restaurante = await Restaurante.findByPk(pedido.RestauranteId);
-        if (restaurante.userId !== req.user.id) {
+        if (restaurante.empresaId !== req.user.id) {
           return res.status(403).json({ erro: 'Acesso negado a este pedido' });
         }
       }
