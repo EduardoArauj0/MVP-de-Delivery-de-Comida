@@ -26,18 +26,20 @@ async function seedDatabase() {
   ]);
 
   // Produtos
-  const produtos = [
-    { nome: 'Pizza de Calabresa', descricao: 'Deliciosa pizza com calabresa', imagem: 'https://via.placeholder.com/150', preco: 39.90, RestauranteId: restaurantesCriados[0].id },
-    { nome: 'Pizza de Margherita', descricao: 'Clássica margherita', imagem: 'https://via.placeholder.com/150', preco: 35.00, RestauranteId: restaurantesCriados[0].id },
-    { nome: 'Pizza de Quatro Queijos', descricao: 'Queijos variados', imagem: 'https://via.placeholder.com/150', preco: 42.00, RestauranteId: restaurantesCriados[0].id },
-    { nome: 'Sushi Combo 10 peças', descricao: 'Combo de sushi fresquinho', imagem: 'https://via.placeholder.com/150', preco: 29.90, RestauranteId: restaurantesCriados[1].id },
-    { nome: 'Temaki de Salmão', descricao: 'Temaki com salmão fresco', imagem: 'https://via.placeholder.com/150', preco: 24.50, RestauranteId: restaurantesCriados[1].id },
-    { nome: 'Yakissoba de Frango', descricao: 'Macarrão oriental', imagem: 'https://via.placeholder.com/150', preco: 27.90, RestauranteId: restaurantesCriados[1].id },
-    { nome: 'Hambúrguer Clássico', descricao: 'Carne, queijo e salada', imagem: 'https://via.placeholder.com/150', preco: 19.90, RestauranteId: restaurantesCriados[2].id },
-    { nome: 'Cheeseburger', descricao: 'Com muito queijo', imagem: 'https://via.placeholder.com/150', preco: 21.90, RestauranteId: restaurantesCriados[2].id },
-    { nome: 'Combo Burger + Batata', descricao: 'Combo completo', imagem: 'https://via.placeholder.com/150', preco: 29.90, RestauranteId: restaurantesCriados[2].id },
-    { nome: 'Milkshake Chocolate', descricao: 'Milkshake gelado', imagem: 'https://via.placeholder.com/150', preco: 14.00, RestauranteId: restaurantesCriados[2].id },
-  ];
+const produtos = [
+  { nome: 'Pizza de Calabresa', categoria: 'pizza', descricao: 'Deliciosa pizza com calabresa', imagem: 'https://via.placeholder.com/150', preco: 39.90, RestauranteId: restaurantesCriados[0].id },
+  { nome: 'Pizza de Margherita', categoria: 'pizza', descricao: 'Clássica margherita', imagem: 'https://via.placeholder.com/150', preco: 35.00, RestauranteId: restaurantesCriados[0].id },
+  { nome: 'Pizza de Quatro Queijos', categoria: 'pizza', descricao: 'Queijos variados', imagem: 'https://via.placeholder.com/150', preco: 42.00, RestauranteId: restaurantesCriados[0].id },
+
+  { nome: 'Sushi Combo 10 peças', categoria: 'japonês', descricao: 'Combo de sushi fresquinho', imagem: 'https://via.placeholder.com/150', preco: 29.90, RestauranteId: restaurantesCriados[1].id },
+  { nome: 'Temaki de Salmão', categoria: 'japonês', descricao: 'Temaki com salmão fresco', imagem: 'https://via.placeholder.com/150', preco: 24.50, RestauranteId: restaurantesCriados[1].id },
+  { nome: 'Yakissoba de Frango', categoria: 'japonês', descricao: 'Macarrão oriental', imagem: 'https://via.placeholder.com/150', preco: 27.90, RestauranteId: restaurantesCriados[1].id },
+
+  { nome: 'Hambúrguer Clássico', categoria: 'hamburguer', descricao: 'Carne, queijo e salada', imagem: 'https://via.placeholder.com/150', preco: 19.90, RestauranteId: restaurantesCriados[2].id },
+  { nome: 'Cheeseburger', categoria: 'hamburguer', descricao: 'Com muito queijo', imagem: 'https://via.placeholder.com/150', preco: 21.90, RestauranteId: restaurantesCriados[2].id },
+  { nome: 'Combo Burger + Batata', categoria: 'hamburguer', descricao: 'Combo completo', imagem: 'https://via.placeholder.com/150', preco: 29.90, RestauranteId: restaurantesCriados[2].id },
+  { nome: 'Milkshake Chocolate', categoria: 'sobremesa', descricao: 'Milkshake gelado', imagem: 'https://via.placeholder.com/150', preco: 14.00, RestauranteId: restaurantesCriados[2].id },
+];
 
   await Produto.bulkCreate(produtos);
 
