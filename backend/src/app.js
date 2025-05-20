@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
 
 app.use(express.json());
 
@@ -29,6 +30,9 @@ app.use('/users', userRoutes);
 
 const uploadRoutes = require('./routes/uploadRoutes');
 app.use('/upload', uploadRoutes);
+
+const swaggerSpec = require('./config/swagger'); 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 
