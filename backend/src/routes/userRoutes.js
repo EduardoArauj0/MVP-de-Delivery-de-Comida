@@ -9,7 +9,7 @@ const authorizeRole = require('../middlewares/authorizeRole');
  * /usuarios/login:
  *   post:
  *     summary: Login de usuário
- *     tags: [Usuários]
+ *     tags: [Usuarios]
  *     requestBody:
  *       required: true
  *       content:

@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: yes
-      MYSQL_DATABASE: delivery_db
+      MYSQL_DATABASE: ${DB_NAME}
     ports:
       - "3306:3306"
     volumes:
@@ -17,13 +17,8 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      DB_HOST: mysql
-      DB_USER: root
-      DB_PASSWORD: ""
-      DB_NAME: delivery_db
-      DB_DIALECT: mysql
-      JWT_SECRET: segredoseguro
+    env_file:
+      - .env
     depends_on:
       - mysql
     volumes:
