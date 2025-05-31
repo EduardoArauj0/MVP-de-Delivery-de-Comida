@@ -9,6 +9,7 @@ import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
+import HomePage from '../pages/HomePage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ const PrivateRoute = ({ children, tipo }) => {
 };
 
 export const routes = createBrowserRouter([
-  { path: '/', element: <Navigate to="/login" /> },
+  { path: '/', element: <HomePage /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   {
