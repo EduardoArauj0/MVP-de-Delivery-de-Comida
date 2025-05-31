@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
+import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
@@ -65,6 +66,14 @@ export const routes = createBrowserRouter([
     element: (
       <PrivateRoute tipo="cliente">
         <PedidosClientePage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/pedidos-recebidos',
+    element: (
+      <PrivateRoute tipo="empresa">
+        <PedidosRecebidosPage />
       </PrivateRoute>
     )
   },
