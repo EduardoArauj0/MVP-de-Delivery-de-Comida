@@ -7,6 +7,7 @@ import DashboardAdmin from '../pages/DashboardAdmin';
 import { useAuth } from '../context/AuthContext';
 import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
+import PedidosClientePage from '../pages/PedidosClientePage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
@@ -56,6 +57,14 @@ export const routes = createBrowserRouter([
     element: (
       <PrivateRoute tipo="cliente">
         <CarrinhoPage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/meus-pedidos',
+    element: (
+      <PrivateRoute tipo="cliente">
+        <PedidosClientePage />
       </PrivateRoute>
     )
   },
