@@ -6,6 +6,7 @@ import DashboardEmpresa from '../pages/DashboardEmpresa';
 import DashboardAdmin from '../pages/DashboardAdmin';
 import { useAuth } from '../context/AuthContext';
 import RestaurantePage from '../pages/RestaurantePage';
+import CarrinhoPage from '../pages/CarrinhoPage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
@@ -47,6 +48,14 @@ export const routes = createBrowserRouter([
     element: (
       <PrivateRoute tipo="cliente">
         <RestaurantePage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/carrinho',
+    element: (
+      <PrivateRoute tipo="cliente">
+        <CarrinhoPage />
       </PrivateRoute>
     )
   },
