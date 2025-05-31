@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import HeaderCliente from '../components/HeaderCliente';
 
 export default function CarrinhoPage() {
   const { user, token } = useAuth();
@@ -105,6 +106,8 @@ export default function CarrinhoPage() {
   };
 
   return (
+    <>
+    <HeaderCliente />
     <div className="container py-5">
       <h2 className="mb-4">Seu Carrinho</h2>
       {erro && <div className="alert alert-danger">{erro}</div>}
@@ -173,5 +176,6 @@ export default function CarrinhoPage() {
         </>
       )}
     </div>
+    </>
   );
 }
