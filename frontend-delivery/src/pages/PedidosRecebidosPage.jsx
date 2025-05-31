@@ -9,19 +9,33 @@ export default function PedidosRecebidosPage() {
   const [erro, setErro] = useState('');
 
   useEffect(() => {
-    async function buscarPedidos() {
-      try {
-        const response = await axios.get('http://localhost:3000/pedidos', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const meusPedidos = response.data.filter(p => p.Restaurante && p.Restaurante.usuarioId === user.id);
-        setPedidos(meusPedidos);
-      } catch {
-        setErro('Erro ao carregar pedidos recebidos');
-      }
-    }
     buscarPedidos();
   }, [token, user.id]);
+
+  async function buscarPedidos() {
+    try {
+      const response = await axios.get('http://localhost:3000/pedidos', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const meusPedidos = response.data.filter(p => p.Restaurante && p.Restaurante.usuarioId === user.id);
+      setPedidos(meusPedidos);
+    } catch {
+      setErro('Erro ao carregar pedidos recebidos');
+    }
+  }
+
+  async function atualizarStatus(pedidoId, novoStatus) {
+    try {
+      await axios.put(`http://localhost:3000/pedidos/${pedidoId}/status`, {
+        status: novoStatus
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      buscarPedidos();
+    } catch {
+      alert('Erro ao atualizar status');
+    }
+  }
 
   return (
     <>
@@ -34,9 +48,18 @@ export default function PedidosRecebidosPage() {
         ) : (
           pedidos.map(pedido => (
             <div className="card mb-4" key={pedido.id}>
-              <div className="card-header d-flex justify-content-between">
+              <div className="card-header d-flex justify-content-between align-items-center">
                 <strong>Pedido #{pedido.id}</strong>
-                <span className="badge bg-secondary">{pedido.status}</span>
+                <select
+                  className="form-select w-auto"
+                  value={pedido.status}
+                  onChange={e => atualizarStatus(pedido.id, e.target.value)}
+                >
+                  <option value="pendente">Pendente</option>
+                  <option value="em preparo">Em preparo</option>
+                  <option value="a caminho">A caminho</option>
+                  <option value="entregue">Entregue</option>
+                </select>
               </div>
               <div className="card-body">
                 <p><strong>Cliente:</strong> {pedido.cliente?.nome}</p>
