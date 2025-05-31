@@ -5,6 +5,7 @@ import DashboardCliente from '../pages/DashboardCliente';
 import DashboardEmpresa from '../pages/DashboardEmpresa';
 import DashboardAdmin from '../pages/DashboardAdmin';
 import { useAuth } from '../context/AuthContext';
+import RestaurantePage from '../pages/RestaurantePage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
@@ -40,5 +41,13 @@ export const routes = createBrowserRouter([
         <DashboardAdmin />
       </PrivateRoute>
     )
-  }
+  },
+  {
+    path: '/restaurante/:id',
+    element: (
+      <PrivateRoute tipo="cliente">
+        <RestaurantePage />
+      </PrivateRoute>
+    )
+  },
 ]);

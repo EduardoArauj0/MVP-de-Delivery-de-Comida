@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function DashboardCliente() {
   const { token } = useAuth();
@@ -31,13 +32,15 @@ export default function DashboardCliente() {
       <div className="row">
         {restaurantes.map(rest => (
           <div className="col-md-4 mb-4" key={rest.id}>
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title">{rest.nome}</h5>
-                <p className="card-text"><strong>Endereço:</strong> {rest.endereco}</p>
-                <p className="card-text"><strong>Telefone:</strong> {rest.telefone}</p>
+            <Link to={`/restaurante/${rest.id}`} className="text-decoration-none text-dark">
+              <div className="card h-100 shadow-sm">
+                <div className="card-body">
+                  <h5 className="card-title">{rest.nome}</h5>
+                  <p className="card-text"><strong>Endereço:</strong> {rest.endereco}</p>
+                  <p className="card-text"><strong>Telefone:</strong> {rest.telefone}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>
