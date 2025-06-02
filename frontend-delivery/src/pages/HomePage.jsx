@@ -7,6 +7,7 @@ import axios from 'axios';
 export default function HomePage() {
   const [restaurantes, setRestaurantes] = useState([]);
   const [busca, setBusca] = useState('');
+  const [filtros, setFiltros] = useState({ entregaGratis: false, pagamento: false });
 
   useEffect(() => {
     async function fetchData() {
@@ -16,15 +17,16 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const filtrados = restaurantes.filter(r =>
-    r.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const filtrados = restaurantes
+    .filter(r => r.nome.toLowerCase().includes(busca.toLowerCase()))
+    .filter(r => !filtros.entregaGratis || r.nome.toLowerCase().includes('grátis'))
+    .filter(r => !filtros.pagamento || r.nome.toLowerCase().includes('pagamento'));
 
   return (
     <>
       <HeaderPublico busca={busca} setBusca={setBusca} />
       <div className="container py-3">
-        <FiltroLojas />
+        <FiltroLojas filtros={filtros} setFiltros={setFiltros} />
         <h4 className="mb-3">Lojas</h4>
         <div className="row">
           {filtrados.map(rest => (
