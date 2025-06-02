@@ -5,11 +5,25 @@ async function seedDatabase() {
   if (restaurantes.length > 0) return console.log('Seed já foi executado.');
 
   // Criar 3 usuários do tipo empresa
-  const empresas = await User.bulkCreate([
-    { nome: 'Dono Pizzaria', email: 'pizzaria@email.com', senha: '123456', tipo: 'empresa' },
-    { nome: 'Dono Sushi', email: 'sushi@email.com', senha: '123456', tipo: 'empresa' },
-    { nome: 'Dono Burger', email: 'burger@email.com', senha: '123456', tipo: 'empresa' }
-  ]);
+  const empresas = [];
+  empresas.push(await User.create({
+    nome: 'Dono Pizzaria',
+    email: 'pizzaria@email.com',
+    senha: '123456',
+    tipo: 'empresa'
+  }));
+  empresas.push(await User.create({
+    nome: 'Dono Sushi',
+    email: 'sushi@email.com',
+    senha: '123456',
+    tipo: 'empresa'
+  }));
+  empresas.push(await User.create({
+    nome: 'Dono Burger',
+    email: 'burger@email.com',
+    senha: '123456',
+    tipo: 'empresa'
+  }));
 
   // Criar restaurantes com vinculação ao userId (empresaId)
   const restaurantesCriados = await Restaurante.bulkCreate([

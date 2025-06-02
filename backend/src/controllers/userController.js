@@ -2,7 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret123'; // usar variáveis ambiente na prática
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = {
   // Cadastro
