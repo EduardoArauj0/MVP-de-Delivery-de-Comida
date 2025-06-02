@@ -1,12 +1,10 @@
-import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import HeaderCliente from '../components/HeaderCliente';
 
 export default function RestaurantePage() {
   const { id } = useParams();
-  const { token, user } = useAuth();
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [feedback, setFeedback] = useState('');
@@ -14,54 +12,45 @@ export default function RestaurantePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [restRes, prodRes] = await Promise.all([
-          axios.get(`http://localhost:3000/restaurantes/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:3000/produtos`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
-
-        setRestaurante(restRes.data);
-        const produtosFiltrados = prodRes.data.filter(p => p.RestauranteId === parseInt(id));
-        setProdutos(produtosFiltrados);
+        const resRest = await axios.get(`http://localhost:3000/restaurantes/${id}`);
+        const resProd = await axios.get('http://localhost:3000/produtos');
+        setRestaurante(resRest.data);
+        setProdutos(resProd.data.filter(p => p.RestauranteId === parseInt(id)));
       } catch (err) {
-        console.error(err);
-        console.error('Erro ao carregar restaurante ou produtos');
+        console.error(err)
+        setFeedback('Erro ao carregar restaurante ou produtos');
       }
     }
     fetchData();
-  }, [id, token]);
+  }, [id]);
 
-  const adicionarAoCarrinho = async (produtoId) => {
-    try {
-      await axios.post(`http://localhost:3000/carrinho/${user.id}/itens`, {
-        produtoId,
-        quantidade: 1
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFeedback('Produto adicionado ao carrinho!');
-      setTimeout(() => setFeedback(''), 2000);
-    } catch (err) {
-      console.error(err);
-      setFeedback('Erro ao adicionar ao carrinho');
-      setTimeout(() => setFeedback(''), 2000);
-    }
-  };
+  function adicionarAoCarrinho(produtoId) {
+    const produto = produtos.find(p => p.id === produtoId);
+    setFeedback(`${produto?.nome || 'Produto'} adicionado ao carrinho!`);
+    setTimeout(() => setFeedback(''), 2000);
+  }
 
-  if (!restaurante) return <div className="container py-5">Carregando...</div>;
+  if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
 
   return (
     <>
       <HeaderCliente />
-      <div className="container py-5">
-        <h2 className="mb-3">{restaurante.nome}</h2>
-        <p><strong>Endereço:</strong> {restaurante.endereco}</p>
-        <hr />
-        {feedback && <div className="alert alert-info">{feedback}</div>}
-        <h4 className="mt-4">Produtos disponíveis</h4>
+      <div className="container py-4">
+        <div className="mb-4">
+          <img
+            src="https://source.unsplash.com/1200x300/?restaurant"
+            alt="Capa do restaurante"
+            className="img-fluid rounded shadow-sm"
+          />
+          <h2 className="mt-3">{restaurante.nome}</h2>
+          <p className="mb-1"><strong>Endereço:</strong> {restaurante.endereco}</p>
+          <p className="mb-1"><strong>Telefone:</strong> {restaurante.telefone}</p>
+          <p className="text-muted">Bem-vindo ao {restaurante.nome}, explore nosso cardápio e faça seu pedido com conforto e praticidade!</p>
+        </div>
+
+        {feedback && <div className="alert alert-success">{feedback}</div>}
+
+        <h4 className="mb-3">Produtos</h4>
         <div className="row">
           {produtos.map(prod => (
             <div className="col-md-4 mb-4" key={prod.id}>
