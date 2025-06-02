@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -14,20 +12,10 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:3000/login', { email, senha });
-      login(res.data.token, res.data.user);
-
-      // redirecionar para o dashboard correto
-      const tipo = res.data.user.tipo;
-      if (tipo === 'cliente') {
-        navigate('/dashboard-cliente');
-      } else if (tipo === 'empresa') {
-        navigate('/pedidos-recebidos');
-      } else {
-        navigate('/admin');
-      }
+      const res = await axios.post('http://localhost:3000/users/login', { email, senha });
+      login(res.data);
     } catch (err) {
-      console.error(err)
+      console.error(err);
       setErro('Email ou senha inválidos');
     }
   }

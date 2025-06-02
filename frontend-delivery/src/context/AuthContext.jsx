@@ -20,10 +20,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
     setToken(data.token);
+
     const tipo = data.user.tipo;
-    if (tipo === 'cliente') navigate('/dashboard-cliente');
-    else if (tipo === 'empresa') navigate('/dashboard-empresa');
-    else if (tipo === 'admin') navigate('/dashboard-admin');
+    if (tipo === 'cliente') {
+      navigate('/dashboard-cliente');
+    } else if (tipo === 'empresa') {
+      navigate('/dashboard-empresa');
+    } else if (tipo === 'admin') {
+      navigate('/dashboard-admin');
+    }
   };
 
   const logout = () => {
