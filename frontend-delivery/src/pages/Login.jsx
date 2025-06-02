@@ -1,41 +1,63 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/usuarios/login', {
-        email,
-        senha
-      });
-      login(response.data);
+      const res = await axios.post('http://localhost:3000/login', { email, senha });
+      login(res.data.token, res.data.user);
+
+      // redirecionar para o dashboard correto
+      const tipo = res.data.user.tipo;
+      if (tipo === 'cliente') {
+        navigate('/dashboard-cliente');
+      } else if (tipo === 'empresa') {
+        navigate('/pedidos-recebidos');
+      } else {
+        navigate('/admin');
+      }
     } catch (err) {
-      console.error(err);
+      console.error(err)
       setErro('Email ou senha inválidos');
     }
-  };
+  }
 
   return (
-    <div className="container d-flex align-items-center justify-content-center vh-100">
-      <form onSubmit={handleSubmit} className="card p-4 shadow" style={{ maxWidth: 400, width: '100%' }}>
-        <h2 className="mb-3 text-center">Login</h2>
-        {erro && <div className="alert alert-danger">{erro}</div>}
+    <div className="container py-5" style={{ maxWidth: 500 }}>
+      <h2 className="mb-4">Login</h2>
+      {erro && <div className="alert alert-danger">{erro}</div>}
+      <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Email</label>
-          <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required />
+          <label>Email</label>
+          <input
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
         <div className="mb-3">
-          <label className="form-label">Senha</label>
-          <input type="password" className="form-control" value={senha} onChange={e => setSenha(e.target.value)} required />
+          <label>Senha</label>
+          <input
+            type="password"
+            className="form-control"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
         </div>
-        <button type="submit" className="btn btn-danger w-100">Entrar</button>
+        <button className="btn btn-danger w-100">Entrar</button>
       </form>
     </div>
   );
