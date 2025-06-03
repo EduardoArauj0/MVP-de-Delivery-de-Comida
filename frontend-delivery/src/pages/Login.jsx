@@ -46,6 +46,10 @@ export default function Login() {
           />
         </div>
         <button className="btn btn-danger w-100">Entrar</button>
+        <div className="text-center mt-3">
+          <span>Não tem conta? </span>
+          <a href="/register" className="text-danger fw-bold">Cadastre-se</a>
+        </div>
       </form>
     </div>
   );
