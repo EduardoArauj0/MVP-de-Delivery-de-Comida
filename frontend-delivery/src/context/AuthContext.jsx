@@ -10,8 +10,16 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token && !user) {
-      const savedUser = JSON.parse(localStorage.getItem('user'));
-      if (savedUser) setUser(savedUser);
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Erro ao fazer parse do usuário:', error);
+          localStorage.removeItem('user');
+        }
+      }
     }
   }, [token, user]);
 
