@@ -1,56 +1,71 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [loadingAuth, setLoadingAuth] = useState(true); 
 
   useEffect(() => {
-    if (token && !user) {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error('Erro ao fazer parse do usuário:', error);
-          localStorage.removeItem('user');
-        }
+    console.log("AuthProvider useEffect: Verificando auth inicial...");
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+        console.log("AuthProvider: Usuário restaurado do localStorage", parsedUser);
+      } catch (error) {
+        console.error('Erro ao fazer parse do usuário do localStorage:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
-  }, [token, user]);
+    setLoadingAuth(false);
+  }, []);
 
-  const login = (data) => {
+  const login = async (data) => {
+    console.log("AuthContext login: ", data);
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
     setToken(data.token);
-
-    const tipo = data.user.tipo;
-    if (tipo === 'cliente') {
-      navigate('/');
-    } else if (tipo === 'empresa') {
-      navigate('/dashboard-empresa');
-    } else if (tipo === 'admin') {
-      navigate('/dashboard-admin');
-    }
+    setUser(data.user);
   };
 
   const logout = () => {
-    localStorage.clear();
+    console.log("AuthContext logout");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     setToken(null);
-    navigate('/login');
   };
 
+  const contextValue = {
+    user,
+    token,
+    loadingAuth,
+    login,
+    logout,
+    setUser, 
+    setToken
+  };
+
+  console.log("AuthProvider render, loadingAuth:", loadingAuth, "User:", user);
+  if (loadingAuth) {
+    return null;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  return context;
+};
