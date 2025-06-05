@@ -3,17 +3,28 @@ const sequelize = require('../config/database');
 const Restaurante = require('./Restaurante');
 
 const Produto = sequelize.define('Produto', {
-  nome: DataTypes.STRING,
+  nome: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   descricao: DataTypes.STRING,
   imagem: DataTypes.STRING,
-  preco: DataTypes.FLOAT,
+  preco: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
   categoria: {
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'outros'
+    defaultValue: 'outros',
+  },
+  ativo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
   }
 });
 
-Produto.belongsTo(Restaurante); // Produto pertence a um restaurante
+Produto.belongsTo(Restaurante, { foreignKey: 'RestauranteId' });
+Restaurante.hasMany(Produto, { foreignKey: 'RestauranteId' });
 
 module.exports = Produto;
