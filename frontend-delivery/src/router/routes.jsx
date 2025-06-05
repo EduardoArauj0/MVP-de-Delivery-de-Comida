@@ -1,23 +1,21 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import DashboardCliente from '../pages/DashboardCliente';
+import HomePage from '../pages/HomePage';
 import DashboardEmpresa from '../pages/DashboardEmpresa';
 import DashboardAdmin from '../pages/DashboardAdmin';
 import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
-import HomePage from '../pages/HomePage';
 import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   if (tipo && user.tipo !== tipo) {
-
     let redirectTo = '/';
-    if (user.tipo === 'cliente') redirectTo = '/dashboard-cliente';
+    if (user.tipo === 'cliente') redirectTo = '/HomePage';
     if (user.tipo === 'empresa') redirectTo = '/dashboard-empresa';
     if (user.tipo === 'admin') redirectTo = '/dashboard-admin';
     if (window.location.pathname === redirectTo) {
@@ -29,11 +27,11 @@ const PrivateRoute = ({ children, tipo }) => {
 };
 
 export const routes = createBrowserRouter([
-  { path: '/', element: <HomePage /> }, 
-  { path: '/login', element: <Login /> }, 
-  { path: '/register', element: <Register /> }, 
+  { path: '/', element: <HomePage /> },
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> },
   {
-    path: '/dashboard-cliente',
+    path: '/HomePage',
     element: (
       <PrivateRoute tipo="cliente">
         <DashboardCliente />
@@ -42,7 +40,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/dashboard-empresa',
-    element: ( 
+    element: (
       <PrivateRoute tipo="empresa">
         <DashboardEmpresa />
       </PrivateRoute>
@@ -50,7 +48,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/dashboard-admin',
-    element: ( 
+    element: (
       <PrivateRoute tipo="admin">
         <DashboardAdmin />
       </PrivateRoute>
@@ -58,21 +56,15 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/restaurante/:id',
-    element: ( 
-      <RestaurantePage />
-    )
+    element: <RestaurantePage /> 
   },
   {
     path: '/carrinho',
-    element: (
-      <PrivateRoute tipo="cliente">
-        <CarrinhoPage />
-      </PrivateRoute>
-    )
+    element: <CarrinhoPage />
   },
   {
     path: '/meus-pedidos',
-    element: ( 
+    element: (
       <PrivateRoute tipo="cliente">
         <PedidosClientePage />
       </PrivateRoute>

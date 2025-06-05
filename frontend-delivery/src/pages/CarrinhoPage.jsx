@@ -1,181 +1,215 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import HeaderCliente from '../components/HeaderCliente';
+import HeaderPublico from '../components/HeaderPublico';
+import { useNavigate, Link } from 'react-router-dom';
+import modoPagamentoService from '../services/modoPagamentoService';
+import pedidoService from '../services/pedidoService';
 
 export default function CarrinhoPage() {
-  const { user, token } = useAuth();
-  const [carrinho, setCarrinho] = useState(null);
-  const [formasPagamento, setFormasPagamento] = useState([]);
-  const [restaurantes, setRestaurantes] = useState([]);
-  const [formaPagamentoId, setFormaPagamentoId] = useState('');
-  const [restauranteId, setRestauranteId] = useState('');
-  const [erro, setErro] = useState('');
-  const [sucesso, setSucesso] = useState('');
+  const { user } = useAuth();
+  const {
+    cartItems,
+    itemCount,
+    totalAmount,
+    loadingCart,
+    cartError,
+    updateItemQuantity,
+    removeItemFromCart,
+    clearClientCart,
+    cartRestaurantId, 
+  } = useCart();
 
+  const navigate = useNavigate();
+
+  const [formasPagamento, setFormasPagamento] = useState([]);
+  const [formaPagamentoId, setFormaPagamentoId] = useState('');
+
+  const [erroCheckout, setErroCheckout] = useState('');
+  const [sucessoCheckout, setSucessoCheckout] = useState('');
+
+  // Carregar formas de pagamento
   useEffect(() => {
-    async function carregarDados() {
+    async function carregarDadosCheckout() {
       try {
-        const [carrinhoRes, pagamentoRes, restauranteRes] = await Promise.all([
-          axios.get(`http://localhost:3000/carrinho/${user.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:3000/modospagamento`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:3000/restaurantes`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
-        setCarrinho(carrinhoRes.data);
+        const pagamentoRes = await modoPagamentoService.listar();
         setFormasPagamento(pagamentoRes.data);
-        setRestaurantes(restauranteRes.data);
       } catch (err) {
         console.error(err);
-        setErro('Erro ao carregar dados do carrinho');
+        setErroCheckout('Erro ao carregar dados para checkout.');
       }
     }
-    carregarDados();
-  }, [user.id, token]);
-
-  const atualizarQuantidade = async (itemId, quantidade) => {
-    try {
-      await axios.put(`http://localhost:3000/carrinho/${user.id}/itens/${itemId}`, {
-        quantidade
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCarrinho(prev => ({
-        ...prev,
-        CarrinhoItems: prev.CarrinhoItems.map(item =>
-          item.id === itemId ? { ...item, quantidade } : item
-        )
-      }));
-    } catch {
-      setErro('Erro ao atualizar item');
+    if(user) {
+        carregarDadosCheckout();
     }
-  };
+  }, [user]); 
 
-  const removerItem = async (itemId) => {
-    try {
-      await axios.delete(`http://localhost:3000/carrinho/${user.id}/itens/${itemId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCarrinho(prev => ({
-        ...prev,
-        CarrinhoItems: prev.CarrinhoItems.filter(item => item.id !== itemId)
-      }));
-    } catch {
-      setErro('Erro ao remover item');
-    }
-  };
-
-  const finalizarPedido = async () => {
-    if (!formaPagamentoId || !restauranteId) {
-      setErro('Escolha o restaurante e a forma de pagamento.');
+  const handleFinalizarPedido = async () => {
+    if (!user) {
+      navigate(`/login?redirect=/carrinho`);
       return;
     }
 
-    const itens = carrinho.CarrinhoItems.map(item => ({
+    if (!cartRestaurantId) {
+      setErroCheckout('Não foi possível identificar o restaurante do seu pedido. Adicione itens ao carrinho primeiro.');
+      return;
+    }
+    if (!formaPagamentoId) {
+      setErroCheckout('Escolha uma forma de pagamento.');
+      return;
+    }
+    if (!cartItems || cartItems.length === 0) {
+      setErroCheckout('Seu carrinho está vazio.');
+      return;
+    }
+
+    const itensPedido = cartItems.map(item => ({
       produtoId: item.Produto.id,
-      quantidade: item.quantidade
+      quantidade: item.quantidade,
     }));
 
     try {
-      await axios.post('http://localhost:3000/pedidos', {
+      setErroCheckout('');
+      setSucessoCheckout('');
+      await pedidoService.criar({
         clienteId: user.id,
-        restauranteId: parseInt(restauranteId),
+        restauranteId: parseInt(cartRestaurantId),
         formaPagamentoId: parseInt(formaPagamentoId),
-        itens
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+        itens: itensPedido,
       });
 
-      setCarrinho({ CarrinhoItems: [] });
-      setSucesso('Pedido realizado com sucesso!');
-      setErro('');
-    } catch {
-      setErro('Erro ao finalizar pedido');
+      setSucessoCheckout('Pedido realizado com sucesso! Você será redirecionado para Meus Pedidos.');
+      clearClientCart();
+      setTimeout(() => {
+        navigate('/meus-pedidos');
+      }, 3000);
+
+    } catch (err) {
+      console.error("Erro ao finalizar pedido:", err);
+      setErroCheckout(err.response?.data?.erro || 'Erro ao finalizar pedido. Tente novamente.');
     }
   };
 
-  const calcularTotal = () => {
-    return carrinho?.CarrinhoItems.reduce((total, item) => {
-      return total + item.quantidade * item.Produto.preco;
-    }, 0).toFixed(2);
-  };
+  if (loadingCart && !itemCount) return <div className="text-center mt-5"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">Carregando carrinho...</span></div></div>;
 
   return (
     <>
-    <HeaderCliente />
-    <div className="container py-5">
-      <h2 className="mb-4">Seu Carrinho</h2>
-      {erro && <div className="alert alert-danger">{erro}</div>}
-      {sucesso && <div className="alert alert-success">{sucesso}</div>}
+      {user ? <HeaderCliente /> : <HeaderPublico setBusca={() => {}} busca="" />} 
+      <div className="container py-5">
+        <h2 className="mb-4">Seu Carrinho</h2>
 
-      {!carrinho || carrinho.CarrinhoItems.length === 0 ? (
-        <p>Seu carrinho está vazio.</p>
-      ) : (
-        <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>Quantidade</th>
-                <th>Preço</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {carrinho.CarrinhoItems.map(item => (
-                <tr key={item.id}>
-                  <td>{item.Produto.nome}</td>
-                  <td>
-                    <input
-                      type="number"
-                      min="1"
-                      className="form-control"
-                      value={item.quantidade}
-                      onChange={e => atualizarQuantidade(item.id, parseInt(e.target.value))}
-                    />
-                  </td>
-                  <td>R$ {(item.Produto.preco * item.quantidade).toFixed(2)}</td>
-                  <td>
-                    <button className="btn btn-sm btn-danger" onClick={() => removerItem(item.id)}>
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {cartError && <div className="alert alert-danger">{cartError}</div>}
+        {erroCheckout && <div className="alert alert-danger">{erroCheckout}</div>}
+        {sucessoCheckout && <div className="alert alert-success">{sucessoCheckout}</div>}
 
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className="form-label">Restaurante</label>
-              <select className="form-select" value={restauranteId} onChange={e => setRestauranteId(e.target.value)}>
-                <option value="">Selecione</option>
-                {restaurantes.map(r => (
-                  <option key={r.id} value={r.id}>{r.nome}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-6">
-              <label className="form-label">Forma de Pagamento</label>
-              <select className="form-select" value={formaPagamentoId} onChange={e => setFormaPagamentoId(e.target.value)}>
-                <option value="">Selecione</option>
-                {formasPagamento.map(fp => (
-                  <option key={fp.id} value={fp.id}>{fp.nome}</option>
-                ))}
-              </select>
-            </div>
+        {itemCount === 0 && !loadingCart ? (
+          <div className="text-center">
+            <p>Seu carrinho está vazio.</p>
+            <Link to="/" className="btn btn-primary">Comece a comprar</Link>
           </div>
+        ) : (
+          <>
+            <table className="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th style={{width: '50%'}}>Produto</th>
+                  <th className="text-center">Quantidade</th>
+                  <th className="text-end">Preço Unit.</th>
+                  <th className="text-end">Subtotal</th>
+                  <th className="text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cartItems?.map(item => (
+                  <tr key={item.Produto.id}>
+                    <td>
+                        <div className="d-flex align-items-center">
+                            {item.Produto.imagem && (
+                                <img src={item.Produto.imagem} alt={item.Produto.nome} style={{width: '60px', height: '60px', objectFit: 'cover', marginRight: '15px', borderRadius: '4px'}}/>
+                            )}
+                            <div>
+                                {item.Produto.nome}
+                                {<small className="d-block text-muted">{item.Produto.descricao || ''}</small>}
+                            </div>
+                        </div>
+                    </td>
+                    <td className="text-center">
+                      <div className="input-group input-group-sm" style={{maxWidth: '120px', margin: 'auto'}}>
+                        <button className="btn btn-outline-secondary" type="button" onClick={() => updateItemQuantity(item.Produto.id, item.quantidade - 1)}>-</button>
+                        <input
+                          type="number"
+                          className="form-control text-center"
+                          value={item.quantidade}
+                          readOnly
+                          aria-label="Quantidade"
+                        />
+                        <button className="btn btn-outline-secondary" type="button" onClick={() => updateItemQuantity(item.Produto.id, item.quantidade + 1)}>+</button>
+                      </div>
+                    </td>
+                    <td className="text-end">R$ {parseFloat(item.Produto.preco).toFixed(2)}</td>
+                    <td className="text-end fw-bold">R$ {(item.Produto.preco * item.quantidade).toFixed(2)}</td>
+                    <td className="text-center">
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => removeItemFromCart(item.id, item.Produto.id)}>
+                        Remover
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <h5 className="mt-3">Total: R$ {calcularTotal()}</h5>
-          <button className="btn btn-success mt-3" onClick={finalizarPedido}>Finalizar Pedido</button>
-        </>
-      )}
-    </div>
+            <div className="row justify-content-end mt-4">
+              <div className="col-md-5">
+                <div className="card">
+                  <div className="card-body">
+                    <h5 className="card-title">Resumo do Pedido</h5>
+                    <hr />
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Subtotal ({itemCount} itens):</span>
+                      <span>R$ {totalAmount.toFixed(2)}</span>
+                    </div>
+                      <div className="d-flex justify-content-between mb-3">
+                      <span>Taxa de entrega:</span>
+                      <span>R$ X.XX</span>
+                    </div>
+                    <div className="d-flex justify-content-between fw-bold fs-5">
+                      <span>Total:</span>
+                      <span>R$ {totalAmount.toFixed(2)}</span>
+                    </div>
+                    <hr />
+                    {user && (
+                        <div className="mb-3">
+                            <label htmlFor="formaPagamento" className="form-label">Forma de Pagamento</label>
+                            <select
+                            id="formaPagamento"
+                            className="form-select"
+                            value={formaPagamentoId}
+                            onChange={e => setFormaPagamentoId(e.target.value)}
+                            required
+                            >
+                            <option value="">Selecione...</option>
+                            {formasPagamento.map(fp => (
+                                <option key={fp.id} value={fp.id}>{fp.nome}</option>
+                            ))}
+                            </select>
+                        </div>
+                    )}
+                    <button
+                        className="btn btn-success w-100 btn-lg mt-2"
+                        onClick={handleFinalizarPedido}
+                        disabled={loadingCart || (user && !formaPagamentoId)}
+                    >
+                      {user ? 'Finalizar Pedido' : 'Fazer Login para Finalizar'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {user && <button className="btn btn-sm btn-outline-warning mt-3" onClick={clearClientCart}>Limpar Carrinho</button>}
+          </>
+        )}
+      </div>
     </>
   );
 }
