@@ -1,77 +1,152 @@
-const { Restaurante } = require('../models');
+const { Restaurante, Cozinha, Produto, User, Pedido, Avaliacao, ItemPedido } = require('../models');
+const { Op } = require('sequelize');
 
 module.exports = {
   // Criar restaurante
   async criar(req, res) {
     try {
-      const { nome, cnpj, telefone, endereco } = req.body;
+      const { nome, cnpj, telefone, endereco, taxaFrete, ativo, aberto, imagemUrl, CozinhaId } = req.body;
 
-      const novo = await Restaurante.create({
+      if (!nome || !CozinhaId) {
+        return res.status(400).json({ erro: 'Nome e CozinhaId são obrigatórios.' });
+      }
+
+      const cozinhaExists = await Cozinha.findByPk(CozinhaId);
+      if (!cozinhaExists) {
+        return res.status(404).json({ erro: 'Tipo de Cozinha não encontrado.' });
+      }
+
+      const novoRestaurante = await Restaurante.create({
         nome,
         cnpj,
         telefone,
         endereco,
-        empresaId: req.user.id // vincula ao usuário autenticado
+        taxaFrete: taxaFrete !== undefined ? parseFloat(taxaFrete) : 0.00,
+        ativo: ativo !== undefined ? ativo : true,
+        aberto: aberto !== undefined ? aberto : true,
+        imagemUrl,
+        CozinhaId,
+        empresaId: req.user.id
       });
 
-      res.status(201).json(novo);
+      res.status(201).json(novoRestaurante);
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao criar restaurante', detalhes: error.message });
     }
   },
 
-  // Listar todos
+  // Listar todos os restaurantes com filtros e ordenação
   async listar(req, res) {
     try {
-      const lista = await Restaurante.findAll();
-      res.json(lista);
+      const { cozinhaId, aberto, entregaGratis, ativoOnly, search, orderBy, orderDirection = 'ASC' } = req.query;
+      const whereClause = {};
+      const includeClause = [{ model: Cozinha }];
+
+      if (cozinhaId) whereClause.CozinhaId = cozinhaId;
+      if (aberto === 'true') whereClause.aberto = true;
+      if (aberto === 'false') whereClause.aberto = false; // Para filtrar fechados
+      if (entregaGratis === 'true') whereClause.taxaFrete = 0;
+      if (ativoOnly === 'true' || ativoOnly === undefined) whereClause.ativo = true;
+
+      if (search) {
+        whereClause.nome = { [Op.like]: `%${search}%` };
+      }
+      
+      let orderClause = [['nome', 'ASC']]; 
+      if (orderBy) {
+        if (['nome', 'taxaFrete'].includes(orderBy)) {
+            orderClause = [[orderBy, orderDirection.toUpperCase() === 'DESC' ? 'DESC' : 'ASC']];
+        }
+      }
+
+      const restaurantes = await Restaurante.findAll({
+        where: whereClause,
+        include: includeClause,
+        order: orderClause,
+      });
+      res.json(restaurantes);
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao buscar restaurantes' });
+      res.status(500).json({ erro: 'Erro ao buscar restaurantes', detalhes: error.message });
     }
   },
 
-  // Buscar por ID
+  // Buscar por ID com Produtos e Cozinha
   async buscarPorId(req, res) {
     try {
-      const restaurante = await Restaurante.findByPk(req.params.id);
-      if (!restaurante) return res.status(404).json({ erro: 'Restaurante não encontrado' });
+      const restaurante = await Restaurante.findByPk(req.params.id, {
+        include: [
+          { model: Cozinha },
+          {
+            model: Produto,
+            where: { ativo: true },
+            required: false
+          }
+        ]
+      });
+      if (!restaurante) {
+        return res.status(404).json({ erro: 'Restaurante não encontrado' });
+      }
       res.json(restaurante);
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao buscar restaurante' });
+      res.status(500).json({ erro: 'Erro ao buscar restaurante', detalhes: error.message });
     }
   },
 
-  // Atualizar
+  // Atualizar restaurante
   async atualizar(req, res) {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id);
-      if (!restaurante) return res.status(404).json({ erro: 'Restaurante não encontrado' });
-
-      if (req.user.tipo !== 'admin' && restaurante.empresaId !== req.user.id) {
-        return res.status(403).json({ erro: 'Você não tem permissão para editar este restaurante' });
+      if (!restaurante) {
+        return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
 
-      await restaurante.update(req.body);
+      // Verificar permissão
+      if (req.user.tipo !== 'admin' && restaurante.empresaId !== req.user.id) {
+        return res.status(403).json({ erro: 'Você não tem permissão para editar este restaurante.' });
+      }
+
+      const { nome, cnpj, telefone, endereco, taxaFrete, ativo, aberto, imagemUrl, CozinhaId } = req.body;
+
+      if (CozinhaId) {
+        const cozinhaExists = await Cozinha.findByPk(CozinhaId);
+        if (!cozinhaExists) {
+          return res.status(404).json({ erro: 'Tipo de Cozinha não encontrado.' });
+        }
+        restaurante.CozinhaId = CozinhaId;
+      }
+
+      if (nome) restaurante.nome = nome;
+      if (cnpj) restaurante.cnpj = cnpj;
+      if (telefone) restaurante.telefone = telefone;
+      if (endereco) restaurante.endereco = endereco;
+      if (taxaFrete !== undefined) restaurante.taxaFrete = parseFloat(taxaFrete);
+      if (ativo !== undefined) restaurante.ativo = ativo;
+      if (aberto !== undefined) restaurante.aberto = aberto;
+      if (imagemUrl !== undefined) restaurante.imagemUrl = imagemUrl;
+
+      await restaurante.save();
       res.json(restaurante);
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao atualizar restaurante' });
+      res.status(500).json({ erro: 'Erro ao atualizar restaurante', detalhes: error.message });
     }
   },
 
-  // Remover
+  // Remover restaurante (apenas admin)
   async remover(req, res) {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id);
-      if (!restaurante) return res.status(404).json({ erro: 'Restaurante não encontrado' });
-
-      if (req.user.tipo !== 'admin') {
-        return res.status(403).json({ erro: 'Apenas administradores podem remover restaurantes' });
+      if (!restaurante) {
+        return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
 
+      if (req.user.tipo !== 'admin') {
+        return res.status(403).json({ erro: 'Apenas administradores podem remover restaurantes.' });
+      }
+      
       await restaurante.destroy();
-      res.json({ mensagem: 'Restaurante removido com sucesso' });
+      res.json({ mensagem: 'Restaurante removido com sucesso.' });
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao remover restaurante' });
+      res.status(500).json({ erro: 'Erro ao remover restaurante', detalhes: error.message });
     }
   }
 };
