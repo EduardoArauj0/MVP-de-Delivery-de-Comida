@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
     const tipo = data.user.tipo;
     if (tipo === 'cliente') {
-      navigate('/dashboard-cliente');
+      navigate('/');
     } else if (tipo === 'empresa') {
       navigate('/dashboard-empresa');
     } else if (tipo === 'admin') {

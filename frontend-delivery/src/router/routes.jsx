@@ -9,24 +9,32 @@ import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  if (tipo && user.tipo !== tipo) return <Navigate to="/login" />;
+  if (tipo && user.tipo !== tipo) {
+
+    let redirectTo = '/';
+    if (user.tipo === 'cliente') redirectTo = '/dashboard-cliente';
+    if (user.tipo === 'empresa') redirectTo = '/dashboard-empresa';
+    if (user.tipo === 'admin') redirectTo = '/dashboard-admin';
+    if (window.location.pathname === redirectTo) {
+        return children;
+    }
+    return <Navigate to={redirectTo} />;
+  }
   return children;
 };
 
-const withAuth = (element) => <AuthProvider>{element}</AuthProvider>;
-
 export const routes = createBrowserRouter([
-  { path: '/', element: withAuth(<HomePage />) },
-  { path: '/login', element: withAuth(<Login />) },
-  { path: '/register', element: withAuth(<Register />) },
+  { path: '/', element: <HomePage /> }, 
+  { path: '/login', element: <Login /> }, 
+  { path: '/register', element: <Register /> }, 
   {
     path: '/dashboard-cliente',
-    element: withAuth(
+    element: (
       <PrivateRoute tipo="cliente">
         <DashboardCliente />
       </PrivateRoute>
@@ -34,7 +42,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/dashboard-empresa',
-    element: withAuth(
+    element: ( 
       <PrivateRoute tipo="empresa">
         <DashboardEmpresa />
       </PrivateRoute>
@@ -42,7 +50,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/dashboard-admin',
-    element: withAuth(
+    element: ( 
       <PrivateRoute tipo="admin">
         <DashboardAdmin />
       </PrivateRoute>
@@ -50,15 +58,13 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/restaurante/:id',
-    element: withAuth(
-      <PrivateRoute tipo="cliente">
-        <RestaurantePage />
-      </PrivateRoute>
+    element: ( 
+      <RestaurantePage />
     )
   },
   {
     path: '/carrinho',
-    element: withAuth(
+    element: (
       <PrivateRoute tipo="cliente">
         <CarrinhoPage />
       </PrivateRoute>
@@ -66,7 +72,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/meus-pedidos',
-    element: withAuth(
+    element: ( 
       <PrivateRoute tipo="cliente">
         <PedidosClientePage />
       </PrivateRoute>
@@ -74,10 +80,11 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/pedidos-recebidos',
-    element: withAuth(
+    element: (
       <PrivateRoute tipo="empresa">
         <PedidosRecebidosPage />
       </PrivateRoute>
     )
   },
+  { path: '*', element: <PaginaNaoEncontrada /> }
 ]);
