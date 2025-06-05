@@ -1,21 +1,20 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import HomePage from '../pages/HomePage';
 import DashboardEmpresa from '../pages/DashboardEmpresa';
 import DashboardAdmin from '../pages/DashboardAdmin';
 import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
+import HomePage from '../pages/HomePage';
 import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
   if (tipo && user.tipo !== tipo) {
     let redirectTo = '/';
-    if (user.tipo === 'cliente') redirectTo = '/HomePage';
     if (user.tipo === 'empresa') redirectTo = '/dashboard-empresa';
     if (user.tipo === 'admin') redirectTo = '/dashboard-admin';
     if (window.location.pathname === redirectTo) {
@@ -30,14 +29,6 @@ export const routes = createBrowserRouter([
   { path: '/', element: <HomePage /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
-  {
-    path: '/HomePage',
-    element: (
-      <PrivateRoute tipo="cliente">
-        <DashboardCliente />
-      </PrivateRoute>
-    )
-  },
   {
     path: '/dashboard-empresa',
     element: (
@@ -56,7 +47,7 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/restaurante/:id',
-    element: <RestaurantePage /> 
+    element: <RestaurantePage />
   },
   {
     path: '/carrinho',
@@ -78,5 +69,4 @@ export const routes = createBrowserRouter([
       </PrivateRoute>
     )
   },
-  { path: '*', element: <PaginaNaoEncontrada /> }
 ]);
