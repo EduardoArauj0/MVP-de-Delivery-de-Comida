@@ -11,42 +11,53 @@ const Carrinho = require('./Carrinho');
 const CarrinhoItem = require('./CarrinhoItem');
 const Cozinha = require('./Cozinha');
 
+// Restaurante - Empresa (User)
 User.hasMany(Restaurante, { foreignKey: 'empresaId' });
-Restaurante.belongsTo(User, { as: 'empresa', foreignKey: 'empresaId' });
+Restaurante.belongsTo(User, { as: 'usuarioEmpresa', foreignKey: 'empresaId' });
 
-Restaurante.belongsTo(Cozinha, { foreignKey: 'CozinhaId' });
-Cozinha.hasMany(Restaurante, { foreignKey: 'CozinhaId' });
+// Restaurante - Cozinha
+Restaurante.belongsTo(Cozinha, { as: 'tipoCozinha', foreignKey: 'CozinhaId' });
+Cozinha.hasMany(Restaurante, { as: 'restaurantesCadastrados', foreignKey: 'CozinhaId' });
 
-Produto.belongsTo(Restaurante, { foreignKey: 'RestauranteId' });
-Restaurante.hasMany(Produto, { foreignKey: 'RestauranteId' });
+// Restaurante - Produto
+Produto.belongsTo(Restaurante, { as: 'restauranteProduto', foreignKey: 'RestauranteId' });
+Restaurante.hasMany(Produto, { as: 'produtosOferecidos', foreignKey: 'RestauranteId' });
 
-Pedido.belongsTo(User, { as: 'cliente', foreignKey: 'clienteId' });
-User.hasMany(Pedido, { as: 'pedidosCliente', foreignKey: 'clienteId'});
+// Pedido - Cliente (User)
+Pedido.belongsTo(User, { as: 'usuarioCliente', foreignKey: 'clienteId' });
+User.hasMany(Pedido, { as: 'pedidosDoCliente', foreignKey: 'clienteId' });
 
-Pedido.belongsTo(Restaurante, { foreignKey: 'RestauranteId' });
-Restaurante.hasMany(Pedido, { foreignKey: 'RestauranteId' });
+// Pedido - Restaurante
+Pedido.belongsTo(Restaurante, { as: 'restaurantePedido', foreignKey: 'RestauranteId' });
+Restaurante.hasMany(Pedido, { as: 'pedidosRecebidos', foreignKey: 'RestauranteId' });
 
-Pedido.belongsTo(ModoPagamento, { as: 'formaPagamento', foreignKey: 'formaPagamentoId' });
-ModoPagamento.hasMany(Pedido, { foreignKey: 'formaPagamentoId' });
+// Pedido - Modo de Pagamento
+Pedido.belongsTo(ModoPagamento, { as: 'metodoPagamento', foreignKey: 'formaPagamentoId' });
+ModoPagamento.hasMany(Pedido, { as: 'pedidosComPagamento', foreignKey: 'formaPagamentoId' });
 
-ItemPedido.belongsTo(Pedido, { foreignKey: 'PedidoId' });
-Pedido.hasMany(ItemPedido, { foreignKey: 'PedidoId' });
+// Pedido - Itens
+ItemPedido.belongsTo(Pedido, { as: 'pedidoRelacionado', foreignKey: 'PedidoId' });
+Pedido.hasMany(ItemPedido, { as: 'itensDoPedido', foreignKey: 'PedidoId' });
 
-ItemPedido.belongsTo(Produto, { foreignKey: 'ProdutoId' });
-Produto.hasMany(ItemPedido, { foreignKey: 'ProdutoId' });
+// Produto - Itens de Pedido
+ItemPedido.belongsTo(Produto, { as: 'produtoItem', foreignKey: 'ProdutoId' });
+Produto.hasMany(ItemPedido, { as: 'itensRelacionados', foreignKey: 'ProdutoId' });
 
-Avaliacao.belongsTo(Pedido, { foreignKey: 'PedidoId' });
-Pedido.hasOne(Avaliacao, { foreignKey: 'PedidoId' });
+// Avaliação - Pedido
+Avaliacao.belongsTo(Pedido, { as: 'pedidoAvaliado', foreignKey: 'PedidoId' });
+Pedido.hasOne(Avaliacao, { as: 'avaliacaoFeita', foreignKey: 'PedidoId' });
 
-Carrinho.belongsTo(User, { as: 'cliente', foreignKey: 'clienteId' });
-User.hasOne(Carrinho, { foreignKey: 'clienteId'});
+// Carrinho - Cliente (User)
+Carrinho.belongsTo(User, { as: 'usuarioCarrinho', foreignKey: 'clienteId' });
+User.hasOne(Carrinho, { as: 'carrinhoDoCliente', foreignKey: 'clienteId' });
 
-CarrinhoItem.belongsTo(Carrinho, { foreignKey: 'CarrinhoId' });
-Carrinho.hasMany(CarrinhoItem, { foreignKey: 'CarrinhoId' });
+// Carrinho - Itens
+CarrinhoItem.belongsTo(Carrinho, { as: 'carrinhoRelacionado', foreignKey: 'CarrinhoId' });
+Carrinho.hasMany(CarrinhoItem, { as: 'itensNoCarrinho', foreignKey: 'CarrinhoId' });
 
-CarrinhoItem.belongsTo(Produto, { foreignKey: 'ProdutoId' });
-Produto.hasMany(CarrinhoItem, { foreignKey: 'ProdutoId' });
-
+// Produto - Itens de Carrinho
+CarrinhoItem.belongsTo(Produto, { as: 'produtoCarrinho', foreignKey: 'ProdutoId' });
+Produto.hasMany(CarrinhoItem, { as: 'carrinhosComProduto', foreignKey: 'ProdutoId' });
 
 module.exports = {
   sequelize,
