@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import userService from '../services/userService';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -13,12 +13,13 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErro('');
     try {
-      await axios.post('http://localhost:3000/usuarios/register', form);
+      await userService.register(form);
       navigate('/login');
     } catch (err) {
       console.error(err);
-      setErro('Erro ao registrar. Tente outro email.');
+      setErro(err.response?.data?.erro || 'Erro ao registrar. Verifique os dados e tente novamente.');
     }
   };
 

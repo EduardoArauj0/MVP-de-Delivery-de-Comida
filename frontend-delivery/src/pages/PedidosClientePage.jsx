@@ -1,27 +1,26 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import HeaderCliente from '../components/HeaderCliente';
+import pedidoService from '../services/pedidoService';
 
 export default function PedidosClientePage() {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [pedidos, setPedidos] = useState([]);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
     async function buscarPedidos() {
+      if (!user) return;
       try {
-        const response = await axios.get('http://localhost:3000/pedidos', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const meusPedidos = response.data.filter(p => p.cliente?.id === user.id);
-        setPedidos(meusPedidos);
-      } catch {
+        const response = await pedidoService.listar();
+        setPedidos(response.data);
+      } catch(err) {
+        console.error(err);
         setErro('Erro ao carregar pedidos');
       }
     }
     buscarPedidos();
-  }, [token, user.id]);
+  }, [user]);
 
   return (
     <>
@@ -42,7 +41,7 @@ export default function PedidosClientePage() {
                 <p><strong>Restaurante:</strong> {pedido.Restaurante?.nome}</p>
                 <p><strong>Forma de Pagamento:</strong> {pedido.formaPagamento?.nome}</p>
                 <ul className="list-group list-group-flush">
-                  {pedido.ItemPedidos.map(item => (
+                  {pedido.ItemPedidos && pedido.ItemPedidos.map(item => (
                     <li className="list-group-item" key={item.id}>
                       {item.Produto?.nome} — {item.quantidade}x — R$ {(item.Produto?.preco * item.quantidade).toFixed(2)}
                     </li>

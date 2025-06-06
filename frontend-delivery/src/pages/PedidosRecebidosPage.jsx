@@ -1,24 +1,23 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import HeaderEmpresa from '../components/HeaderEmpresa';
+import pedidoService from '../services/pedidoService';
 
 export default function PedidosRecebidosPage() {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [pedidos, setPedidos] = useState([]);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
-    buscarPedidos();
-  }, [token, user.id]);
+    if (user?.id) {
+        buscarPedidos();
+    }
+  }, [user]);
 
   async function buscarPedidos() {
     try {
-      const response = await axios.get('http://localhost:3000/pedidos', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const meusPedidos = response.data.filter(p => p.Restaurante && p.Restaurante.usuarioId === user.id);
-      setPedidos(meusPedidos);
+      const response = await pedidoService.listar();
+      setPedidos(response.data);
     } catch {
       setErro('Erro ao carregar pedidos recebidos');
     }
@@ -26,14 +25,11 @@ export default function PedidosRecebidosPage() {
 
   async function atualizarStatus(pedidoId, novoStatus) {
     try {
-      await axios.put(`http://localhost:3000/pedidos/${pedidoId}/status`, {
-        status: novoStatus
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await pedidoService.atualizarStatus(pedidoId, { status: novoStatus });
       buscarPedidos();
-    } catch {
-      alert('Erro ao atualizar status');
+    } catch(err) {
+      console.error(err);
+      alert(err.response?.data?.erro || 'Erro ao atualizar status');
     }
   }
 
@@ -59,15 +55,16 @@ export default function PedidosRecebidosPage() {
                   <option value="em preparo">Em preparo</option>
                   <option value="a caminho">A caminho</option>
                   <option value="entregue">Entregue</option>
+                  <option value="cancelado">Cancelado</option>
                 </select>
               </div>
               <div className="card-body">
-                <p><strong>Cliente:</strong> {pedido.cliente?.nome}</p>
-                <p><strong>Forma de Pagamento:</strong> {pedido.formaPagamento?.nome}</p>
+                <p><strong>Cliente:</strong> {pedido.cliente?.nome || 'Não identificado'}</p>
+                <p><strong>Forma de Pagamento:</strong> {pedido.formaPagamento?.nome || 'Não identificada'}</p>
                 <ul className="list-group list-group-flush">
-                  {pedido.ItemPedidos.map(item => (
+                  {pedido.ItemPedidos && pedido.ItemPedidos.map(item => (
                     <li className="list-group-item" key={item.id}>
-                      {item.Produto?.nome} — {item.quantidade}x — R$ {(item.Produto?.preco * item.quantidade).toFixed(2)}
+                      {item.Produto?.nome || 'Produto Indisponível'} — {item.quantidade}x — R$ {item.Produto?.preco ? (item.Produto.preco * item.quantidade).toFixed(2) : 'N/A'}
                     </li>
                   ))}
                 </ul>

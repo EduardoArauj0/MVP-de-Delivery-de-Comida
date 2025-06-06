@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import HeaderCliente from '../components/HeaderCliente';
+import restauranteService from '../services/restauranteService';
+import produtoService from '../services/produtoService';
+import { useAuth } from '../context/AuthContext';
+import HeaderPublico from '../components/HeaderPublico';
 
 export default function RestaurantePage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [feedback, setFeedback] = useState('');
@@ -12,12 +16,13 @@ export default function RestaurantePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const resRest = await axios.get(`http://localhost:3000/restaurantes/${id}`);
-        const resProd = await axios.get('http://localhost:3000/produtos');
+        const resRest = await restauranteService.buscarPorId(id);
         setRestaurante(resRest.data);
-        setProdutos(resProd.data.filter(p => p.RestauranteId === parseInt(id)));
+        const resProd = await produtoService.listar({ RestauranteId: id, ativoOnly: true });
+        setProdutos(resProd.data);
+
       } catch (err) {
-        console.error(err)
+        console.error(err);
         setFeedback('Erro ao carregar restaurante ou produtos');
       }
     }
@@ -34,13 +39,14 @@ export default function RestaurantePage() {
 
   return (
     <>
-      <HeaderCliente />
+      { user ? <HeaderCliente /> : <HeaderPublico /> }
       <div className="container py-4">
         <div className="mb-4">
           <img
-            src="https://source.unsplash.com/1200x300/?restaurant"
+            src={restaurante.imagemUrl || "https://source.unsplash.com/1200x300/?restaurant"}
             alt="Capa do restaurante"
             className="img-fluid rounded shadow-sm"
+            style={{ width: '100%', height: '300px', objectFit: 'cover' }}
           />
           <h2 className="mt-3">{restaurante.nome}</h2>
           <p className="mb-1"><strong>Endereço:</strong> {restaurante.endereco}</p>
@@ -55,12 +61,12 @@ export default function RestaurantePage() {
           {produtos.map(prod => (
             <div className="col-md-4 mb-4" key={prod.id}>
               <div className="card h-100">
-                <img src={prod.imagem} className="card-img-top" alt={prod.nome} />
-                <div className="card-body">
+                <img src={prod.imagem || `https://source.unsplash.com/400x300/?food,${prod.categoria.toLowerCase()}`} className="card-img-top" alt={prod.nome} style={{ height: '200px', objectFit: 'cover' }} />
+                <div className="card-body d-flex flex-column">
                   <h5 className="card-title">{prod.nome}</h5>
                   <p className="card-text">{prod.descricao}</p>
-                  <p className="card-text fw-bold">R$ {prod.preco.toFixed(2)}</p>
-                  <button className="btn btn-success w-100" onClick={() => adicionarAoCarrinho(prod.id)}>
+                  <p className="card-text fw-bold">R$ {parseFloat(prod.preco).toFixed(2)}</p>
+                  <button className="btn btn-success w-100 mt-auto" onClick={() => adicionarAoCarrinho(prod.id)}>
                     Adicionar ao carrinho
                   </button>
                 </div>

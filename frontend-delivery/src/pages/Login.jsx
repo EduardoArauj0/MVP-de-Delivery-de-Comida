@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import userService from '../services/userService'; 
 
 export default function Login() {
   const { login } = useAuth();
@@ -11,12 +11,13 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setErro(''); 
     try {
-      const res = await axios.post('http://localhost:3000/users/login', { email, senha });
+      const res = await userService.login({ email, senha });
       login(res.data);
     } catch (err) {
       console.error(err);
-      setErro('Email ou senha inválidos');
+      setErro(err.response?.data?.erro || 'Email ou senha inválidos');
     }
   }
 
@@ -45,7 +46,7 @@ export default function Login() {
             required
           />
         </div>
-        <button className="btn btn-danger w-100">Entrar</button>
+        <button type="submit" className="btn btn-danger w-100">Entrar</button>
         <div className="text-center mt-3">
           <span>Não tem conta? </span>
           <a href="/register" className="text-danger fw-bold">Cadastre-se</a>
