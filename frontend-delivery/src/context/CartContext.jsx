@@ -55,7 +55,6 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-
   const fetchBackendCart = useCallback(async () => {
     if (user?.id && user.tipo === 'cliente' && token) {
       setLoadingCart(true);
@@ -66,37 +65,15 @@ export const CartProvider = ({ children }) => {
       } catch (error) {
         console.error('Erro ao buscar carrinho do backend:', error);
         setCartError(error.response?.data?.erro || 'Erro ao carregar carrinho do backend.');
-        if (error.response?.status === 404) {
-            try {
-                const newCartResponse = await carrinhoService.obterCarrinho(user.id);
-                setCart(newCartResponse.data);
-            } catch (retryError) {
-                console.error(retryError);
-                setCart(null);
-            }
-        } else {
-            setCart(null);
-        }
+        setCart(null);
       } finally {
         setLoadingCart(false);
       }
     }
   }, [user, token]);
 
-  // Efeito para carregar o carrinho apropriado (local ou backend) na montagem ou quando o usuário muda
-  useEffect(() => {
-    if (user?.id && user.tipo === 'cliente') {
-      fetchBackendCart();
-    } else {
-      setCart(loadLocalCart());
-      setLoadingCart(false);
-      setCartError(null);
-    }
-  }, [user, fetchBackendCart, loadLocalCart]);
-
-
   const syncLocalCartWithBackend = useCallback(async () => {
-    if (!user?.id || !token) return; 
+    if (!user?.id || !token || isSyncing) return; 
     const localCartData = loadLocalCart();
 
     if (localCartData && localCartData.CarrinhoItems && localCartData.CarrinhoItems.length > 0) {
@@ -104,6 +81,8 @@ export const CartProvider = ({ children }) => {
       setCartError(null);
       console.log("Sincronizando carrinho local com backend...");
       try {
+        await carrinhoService.limparCarrinho(user.id);
+        
         for (const item of localCartData.CarrinhoItems) {
           await carrinhoService.adicionarItem(user.id, {
             produtoId: item.Produto.id,
@@ -123,7 +102,17 @@ export const CartProvider = ({ children }) => {
     } else {
        await fetchBackendCart();
     }
-  }, [user, token, loadLocalCart, fetchBackendCart]);
+  }, [user, token, isSyncing, loadLocalCart, fetchBackendCart]);
+
+  useEffect(() => {
+    if (user?.id && user.tipo === 'cliente') {
+      syncLocalCartWithBackend();
+    } else {
+      setCart(loadLocalCart());
+      setLoadingCart(false);
+      setCartError(null);
+    }
+  }, [user]);
 
   const addItemToCart = async (produto, quantidade) => {
     setLoadingCart(true);
@@ -161,15 +150,13 @@ export const CartProvider = ({ children }) => {
         if (!newCart.restauranteId && produto.RestauranteId) {
             newCart.restauranteId = produto.RestauranteId;
             newCart.restauranteNome = produto.Restaurante?.nome || "Restaurante Desconhecido";
-
         }
-
-
+        
         const existingItemIndex = newCart.CarrinhoItems.findIndex(i => i.Produto.id === produto.id);
         if (existingItemIndex > -1) {
           newCart.CarrinhoItems[existingItemIndex].quantidade += quantidade;
         } else {
-          newCart.CarrinhoItems.push({ Produto: produto, quantidade });
+          newCart.CarrinhoItems.push({ Produto: produto, quantidade, id: `local-${produto.id}` });
         }
         saveLocalCart(newCart);
         return newCart;
@@ -289,7 +276,7 @@ export const CartProvider = ({ children }) => {
 
   const cartDetails = React.useMemo(() => {
     if (!cart || !cart.CarrinhoItems) {
-      return { itemCount: 0, totalAmount: 0, cartItems: [], currentCartRestaurantId: null, currentCartRestaurantNome: null };
+      return { itemCount: 0, totalAmount: 0, cartItems: [], cartRestaurantId: null, cartRestaurantNome: null };
     }
     const itemCount = cart.CarrinhoItems.reduce((sum, item) => sum + item.quantidade, 0);
     const totalAmount = cart.CarrinhoItems.reduce((sum, item) => {
@@ -297,10 +284,10 @@ export const CartProvider = ({ children }) => {
         return sum + (item.quantidade * price);
     }, 0);
 
-    const currentCartRestaurantId = cart.restauranteId || (cart.CarrinhoItems.length > 0 && cart.CarrinhoItems[0].Produto?.RestauranteId) || null;
-    const currentCartRestaurantNome = cart.restauranteNome || (cart.CarrinhoItems.length > 0 && cart.CarrinhoItems[0].Produto?.Restaurante?.nome) || null;
+    const cartRestaurantId = cart.restauranteId || (cart.CarrinhoItems.length > 0 && cart.CarrinhoItems[0].Produto?.RestauranteId) || null;
+    const cartRestaurantNome = cart.restauranteNome || (cart.CarrinhoItems.length > 0 && (cart.CarrinhoItems[0].Produto?.Restaurante?.nome || cart.CarrinhoItems[0].Produto?.restauranteProduto?.nome)) || null;
 
-    return { itemCount, totalAmount, cartItems: cart.CarrinhoItems, currentCartRestaurantId, currentCartRestaurantNome };
+    return { itemCount, totalAmount, cartItems: cart.CarrinhoItems, cartRestaurantId, cartRestaurantNome };
   }, [cart]);
 
   return (
@@ -309,8 +296,8 @@ export const CartProvider = ({ children }) => {
       cartItems: cartDetails.cartItems,
       itemCount: cartDetails.itemCount,
       totalAmount: cartDetails.totalAmount,
-      cartRestaurantId: cartDetails.currentCartRestaurantId,
-      cartRestaurantNome: cartDetails.currentCartRestaurantNome,
+      cartRestaurantId: cartDetails.cartRestaurantId,
+      cartRestaurantNome: cartDetails.cartRestaurantNome,
       loadingCart,
       cartError,
       isSyncing,
