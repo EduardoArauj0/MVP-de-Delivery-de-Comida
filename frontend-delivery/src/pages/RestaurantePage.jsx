@@ -1,45 +1,61 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import HeaderCliente from '../components/HeaderCliente';
+import HeaderPublico from '../components/HeaderPublico';
 import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
 import { useAuth } from '../context/AuthContext';
-import HeaderPublico from '../components/HeaderPublico';
+import { useCart } from '../context/CartContext';
 
 export default function RestaurantePage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { addItemToCart } = useCart(); 
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [feedback, setFeedback] = useState('');
+  const [feedbackError, setFeedbackError] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
         const resRest = await restauranteService.buscarPorId(id);
         setRestaurante(resRest.data);
+        
         const resProd = await produtoService.listar({ RestauranteId: id, ativoOnly: true });
         setProdutos(resProd.data);
 
       } catch (err) {
         console.error(err);
-        setFeedback('Erro ao carregar restaurante ou produtos');
+        setFeedbackError('Erro ao carregar restaurante ou produtos');
       }
     }
     fetchData();
   }, [id]);
 
-  function adicionarAoCarrinho(produtoId) {
-    const produto = produtos.find(p => p.id === produtoId);
-    setFeedback(`${produto?.nome || 'Produto'} adicionado ao carrinho!`);
-    setTimeout(() => setFeedback(''), 2000);
+  async function handleAdicionarAoCarrinho(produto) {
+    setFeedback('');
+    setFeedbackError('');
+    
+    const sucesso = await addItemToCart(produto, 1);
+
+    if (sucesso) {
+      setFeedback(`${produto.nome} adicionado ao carrinho!`);
+    } else {
+      setFeedbackError(`Não foi possível adicionar ${produto.nome}. Verifique se já existem itens de outro restaurante no seu carrinho.`);
+    }
+
+    setTimeout(() => {
+        setFeedback('');
+        setFeedbackError('');
+    }, 3000);
   }
 
   if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
 
   return (
     <>
-      { user ? <HeaderCliente /> : <HeaderPublico /> }
+      { user ? <HeaderCliente /> : <HeaderPublico busca="" setBusca={() => {}} /> }
       <div className="container py-4">
         <div className="mb-4">
           <img
@@ -55,6 +71,7 @@ export default function RestaurantePage() {
         </div>
 
         {feedback && <div className="alert alert-success">{feedback}</div>}
+        {feedbackError && <div className="alert alert-danger">{feedbackError}</div>}
 
         <h4 className="mb-3">Produtos</h4>
         <div className="row">
@@ -66,7 +83,7 @@ export default function RestaurantePage() {
                   <h5 className="card-title">{prod.nome}</h5>
                   <p className="card-text">{prod.descricao}</p>
                   <p className="card-text fw-bold">R$ {parseFloat(prod.preco).toFixed(2)}</p>
-                  <button className="btn btn-success w-100 mt-auto" onClick={() => adicionarAoCarrinho(prod.id)}>
+                  <button className="btn btn-success w-100 mt-auto" onClick={() => handleAdicionarAoCarrinho(prod)}>
                     Adicionar ao carrinho
                   </button>
                 </div>
