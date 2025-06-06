@@ -1,4 +1,4 @@
-const { Restaurante, Cozinha, Produto, User, Pedido, Avaliacao, ItemPedido } = require('../models');
+const { Restaurante, Cozinha, Produto } = require('../models');
 const { Op } = require('sequelize');
 
 module.exports = {
@@ -40,11 +40,12 @@ module.exports = {
     try {
       const { cozinhaId, aberto, entregaGratis, ativoOnly, search, orderBy, orderDirection = 'ASC' } = req.query;
       const whereClause = {};
-      const includeClause = [{ model: Cozinha }];
+      
+      const includeClause = [{ model: Cozinha, as: 'tipoCozinha' }];
 
       if (cozinhaId) whereClause.CozinhaId = cozinhaId;
       if (aberto === 'true') whereClause.aberto = true;
-      if (aberto === 'false') whereClause.aberto = false; // Para filtrar fechados
+      if (aberto === 'false') whereClause.aberto = false;
       if (entregaGratis === 'true') whereClause.taxaFrete = 0;
       if (ativoOnly === 'true' || ativoOnly === undefined) whereClause.ativo = true;
 
@@ -66,6 +67,7 @@ module.exports = {
       });
       res.json(restaurantes);
     } catch (error) {
+      console.error("Erro ao listar restaurantes:", error);
       res.status(500).json({ erro: 'Erro ao buscar restaurantes', detalhes: error.message });
     }
   },
@@ -75,9 +77,10 @@ module.exports = {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id, {
         include: [
-          { model: Cozinha },
+          { model: Cozinha, as: 'tipoCozinha' },
           {
             model: Produto,
+            as: 'produtosOferecidos',
             where: { ativo: true },
             required: false
           }
@@ -88,6 +91,7 @@ module.exports = {
       }
       res.json(restaurante);
     } catch (error) {
+      console.error("Erro ao buscar restaurante por ID:", error);
       res.status(500).json({ erro: 'Erro ao buscar restaurante', detalhes: error.message });
     }
   },
@@ -100,7 +104,6 @@ module.exports = {
         return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
 
-      // Verificar permissão
       if (req.user.tipo !== 'admin' && restaurante.empresaId !== req.user.id) {
         return res.status(403).json({ erro: 'Você não tem permissão para editar este restaurante.' });
       }
