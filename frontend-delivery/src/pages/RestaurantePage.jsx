@@ -4,15 +4,18 @@ import HeaderCliente from '../components/HeaderCliente';
 import HeaderPublico from '../components/HeaderPublico';
 import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
+import avaliacaoService from '../services/avaliacaoService';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 export default function RestaurantePage() {
   const { id } = useParams();
   const { user } = useAuth();
-  const { addItemToCart } = useCart(); 
+  const { addItemToCart } = useCart();
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
+  const [avaliacoes, setAvaliacoes] = useState([]);
+  const [mediaAvaliacoes, setMediaAvaliacoes] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [feedbackError, setFeedbackError] = useState('');
 
@@ -25,9 +28,15 @@ export default function RestaurantePage() {
         const resProd = await produtoService.listar({ RestauranteId: id, ativoOnly: true });
         setProdutos(resProd.data);
 
+        const resAval = await avaliacaoService.listarPorRestaurante(id);
+        if (resAval.data) {
+          setAvaliacoes(resAval.data.avaliacoes);
+          setMediaAvaliacoes(resAval.data.mediaNotas);
+        }
+
       } catch (err) {
         console.error(err);
-        setFeedbackError('Erro ao carregar restaurante ou produtos');
+        setFeedbackError('Erro ao carregar dados do restaurante');
       }
     }
     fetchData();
@@ -49,6 +58,14 @@ export default function RestaurantePage() {
         setFeedback('');
         setFeedbackError('');
     }, 3000);
+  }
+
+  const renderStars = (nota) => {
+    let stars = '';
+    for (let i = 0; i < 5; i++) {
+      stars += i < nota ? '★' : '☆';
+    }
+    return <span className="text-warning">{stars}</span>;
   }
 
   if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
@@ -73,7 +90,7 @@ export default function RestaurantePage() {
         {feedback && <div className="alert alert-success">{feedback}</div>}
         {feedbackError && <div className="alert alert-danger">{feedbackError}</div>}
 
-        <h4 className="mb-3">Produtos</h4>
+        <h4 className="mb-3">Cardápio</h4>
         <div className="row">
           {produtos.map(prod => (
             <div className="col-md-4 mb-4" key={prod.id}>
@@ -91,6 +108,32 @@ export default function RestaurantePage() {
             </div>
           ))}
         </div>
+
+        <hr className="my-5" />
+
+        {/* Seção de Avaliações */}
+        <div>
+          <h4 className="mb-3">
+            Avaliações ({avaliacoes.length}) - Média: {mediaAvaliacoes.toFixed(1)} <span className='text-warning'>★</span>
+          </h4>
+          {avaliacoes.length > 0 ? (
+            avaliacoes.map(aval => (
+              <div className="card mb-3" key={aval.id}>
+                <div className="card-body">
+                  <div className='d-flex justify-content-between'>
+                    <strong>{aval.Pedido.cliente.nome}</strong>
+                    <span>{renderStars(aval.nota)}</span>
+                  </div>
+                  <p className="card-text mt-2 mb-0">{aval.comentario}</p>
+                  <small className="text-muted">Avaliado em: {new Date(aval.createdAt).toLocaleDateString('pt-BR')}</small>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>Este restaurante ainda não possui avaliações.</p>
+          )}
+        </div>
+
       </div>
     </>
   );
