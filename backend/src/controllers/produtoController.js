@@ -51,7 +51,7 @@ module.exports = {
 
       const produtos = await Produto.findAll({
         where: whereClause,
-        include: [{ model: Restaurante, attributes: ['id', 'nome'] }]
+        include: [{ model: Restaurante, as: 'restauranteProduto', attributes: ['id', 'nome'] }]
       });
       res.json(produtos);
     } catch (error) {
@@ -62,7 +62,9 @@ module.exports = {
   // Buscar por ID
   async buscarPorId(req, res) {
     try {
-      const produto = await Produto.findByPk(req.params.id, { include: Restaurante });
+      const produto = await Produto.findByPk(req.params.id, { 
+        include: [{ model: Restaurante, as: 'restauranteProduto' }] 
+      });
       if (!produto) {
         return res.status(404).json({ erro: 'Produto não encontrado' });
       }

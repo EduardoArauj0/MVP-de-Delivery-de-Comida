@@ -23,6 +23,10 @@ Cozinha.hasMany(Restaurante, { as: 'restaurantesCadastrados', foreignKey: 'Cozin
 Produto.belongsTo(Restaurante, { as: 'restauranteProduto', foreignKey: 'RestauranteId' });
 Restaurante.hasMany(Produto, { as: 'produtosOferecidos', foreignKey: 'RestauranteId' });
 
+// Restaurante - Avaliacao
+Restaurante.hasMany(Avaliacao, { foreignKey: 'RestauranteId' });
+Avaliacao.belongsTo(Restaurante, { foreignKey: 'RestauranteId' });
+
 // Pedido - Cliente (User)
 Pedido.belongsTo(User, { as: 'usuarioCliente', foreignKey: 'clienteId' });
 User.hasMany(Pedido, { as: 'pedidosDoCliente', foreignKey: 'clienteId' });
@@ -46,6 +50,10 @@ Produto.hasMany(ItemPedido, { as: 'itensRelacionados', foreignKey: 'ProdutoId' }
 // Avaliação - Pedido
 Avaliacao.belongsTo(Pedido, { as: 'pedidoAvaliado', foreignKey: 'PedidoId' });
 Pedido.hasOne(Avaliacao, { as: 'avaliacaoFeita', foreignKey: 'PedidoId' });
+
+// Avaliação - Cliente (User)
+Avaliacao.belongsTo(User, { as: 'avaliador', foreignKey: 'clienteId' });
+User.hasMany(Avaliacao, { as: 'avaliacoesFeitas', foreignKey: 'clienteId' });
 
 // Carrinho - Cliente (User)
 Carrinho.belongsTo(User, { as: 'usuarioCarrinho', foreignKey: 'clienteId' });

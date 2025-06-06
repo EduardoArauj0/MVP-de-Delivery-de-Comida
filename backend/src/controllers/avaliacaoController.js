@@ -13,7 +13,10 @@ module.exports = {
         return res.status(400).json({ erro: 'A nota deve ser entre 1 e 5.' });
       }
 
-      const pedido = await Pedido.findByPk(PedidoId);
+      const pedido = await Pedido.findByPk(PedidoId, {
+        include: [{ model: Restaurante, as: 'restaurantePedido' }]
+      });
+      
       if (!pedido) {
         return res.status(404).json({ erro: 'Pedido não encontrado para avaliação.' });
       }
@@ -27,7 +30,13 @@ module.exports = {
         return res.status(400).json({ erro: 'Este pedido já foi avaliado.' });
       }
 
-      const avaliacao = await Avaliacao.create({ nota, comentario, PedidoId });
+      const avaliacao = await Avaliacao.create({ 
+          nota, 
+          comentario, 
+          PedidoId,
+          clienteId: pedido.clienteId,
+          RestauranteId: pedido.RestauranteId 
+        });
       res.status(201).json(avaliacao);
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao criar avaliação', detalhes: error.message });
@@ -41,9 +50,10 @@ module.exports = {
         include: [
           {
             model: Pedido,
+            as: 'pedidoAvaliado',
             include: [
-              { model: User, as: 'cliente', attributes: ['id', 'nome'] },
-              { model: Restaurante, attributes: ['id', 'nome'] }
+              { model: User, as: 'usuarioCliente', attributes: ['id', 'nome'] },
+              { model: Restaurante, as: 'restaurantePedido', attributes: ['id', 'nome'] }
             ]
           }
         ],
@@ -65,19 +75,19 @@ module.exports = {
       }
 
       const avaliacoes = await Avaliacao.findAll({
+        where: { RestauranteId: restauranteId },
         include: [{
-          model: Pedido,
-          where: { RestauranteId: restauranteId },
-          attributes: ['id', 'dataCriacao'],
-          include: [{ model: User, as: 'cliente', attributes: ['id', 'nome']}]
+            model: User,
+            as: 'avaliador',
+            attributes: ['id', 'nome']
         }],
         order: [['createdAt', 'DESC']]
       });
-
+      
       const totalNotas = avaliacoes.reduce((sum, aval) => sum + aval.nota, 0);
-      const media = avaliacoes.length > 0 ? (totalNotas / avaliacoes.length).toFixed(1) : 0;
+      const media = avaliacoes.length > 0 ? (totalNotas / avaliacoes.length) : 0;
 
-      res.json({ avaliacoes, mediaNotas: parseFloat(media)});
+      res.json({ avaliacoes, mediaNotas: parseFloat(media.toFixed(1))});
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao listar avaliações do restaurante', detalhes: error.message });
     }
@@ -86,7 +96,9 @@ module.exports = {
   // Buscar avaliação por ID
   async buscarPorId(req, res) {
     try {
-      const avaliacao = await Avaliacao.findByPk(req.params.id, { include: Pedido });
+      const avaliacao = await Avaliacao.findByPk(req.params.id, { 
+          include: [{model: Pedido, as: 'pedidoAvaliado'}]
+      });
       if (!avaliacao) {
         return res.status(404).json({ erro: 'Avaliação não encontrada.' });
       }
@@ -99,12 +111,14 @@ module.exports = {
   // Atualizar avaliação
   async atualizar(req, res) {
     try {
-      const avaliacao = await Avaliacao.findByPk(req.params.id, { include: Pedido });
+      const avaliacao = await Avaliacao.findByPk(req.params.id, { 
+          include: [{model: Pedido, as: 'pedidoAvaliado'}]
+        });
       if (!avaliacao) {
         return res.status(404).json({ erro: 'Avaliação não encontrada.' });
       }
 
-      if (avaliacao.Pedido.clienteId !== req.user.id) {
+      if (avaliacao.pedidoAvaliado.clienteId !== req.user.id) {
         return res.status(403).json({ erro: 'Você não tem permissão para atualizar esta avaliação.' });
       }
 
@@ -125,12 +139,14 @@ module.exports = {
   // Remover avaliação
   async remover(req, res) {
     try {
-      const avaliacao = await Avaliacao.findByPk(req.params.id, { include: Pedido });
+      const avaliacao = await Avaliacao.findByPk(req.params.id, { 
+          include: [{model: Pedido, as: 'pedidoAvaliado'}]
+      });
       if (!avaliacao) {
         return res.status(404).json({ erro: 'Avaliação não encontrada.' });
       }
 
-      if (avaliacao.Pedido.clienteId !== req.user.id && req.user.tipo !== 'admin') {
+      if (avaliacao.pedidoAvaliado.clienteId !== req.user.id && req.user.tipo !== 'admin') {
         return res.status(403).json({ erro: 'Você não tem permissão para remover esta avaliação.' });
       }
 
