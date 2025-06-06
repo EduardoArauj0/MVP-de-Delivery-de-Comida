@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Restaurante = require('./Restaurante');
 
 const Produto = sequelize.define('Produto', {
   nome: {
@@ -23,8 +22,5 @@ const Produto = sequelize.define('Produto', {
     defaultValue: true,
   }
 });
-
-Produto.belongsTo(Restaurante, { foreignKey: 'RestauranteId' });
-Restaurante.hasMany(Produto, { foreignKey: 'RestauranteId' });
 
 module.exports = Produto;

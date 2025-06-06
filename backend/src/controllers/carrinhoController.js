@@ -1,4 +1,4 @@
-const { Carrinho, CarrinhoItem, Produto, User } = require('../models');
+const { Carrinho, CarrinhoItem, Produto } = require('../models');
 
 module.exports = {
   // Obter carrinho do cliente com itens e produtos
@@ -11,20 +11,28 @@ module.exports = {
       }
 
       let carrinho = await Carrinho.findOne({
-        where: { clienteId },
-        include: {
+        where: { clienteId: Number(clienteId) },
+        include: [{
           model: CarrinhoItem,
-          include: Produto
-        }
+          as: 'itensNoCarrinho',
+          include: [{
+            model: Produto,
+            as: 'produtoCarrinho' 
+          }]
+        }]
       });
 
       if (!carrinho) {
-        carrinho = await Carrinho.create({ clienteId });
+        carrinho = await Carrinho.create({ clienteId: Number(clienteId) });
+        const carrinhoVazio = carrinho.toJSON();
+        carrinhoVazio.itensNoCarrinho = [];
+        return res.json(carrinhoVazio);
       }
 
       res.json(carrinho);
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao obter carrinho' });
+      console.error('Erro detalhado ao obter carrinho:', error); 
+      res.status(500).json({ erro: 'Erro ao obter carrinho', detalhes: error.message });
     }
   },
 
@@ -38,16 +46,12 @@ module.exports = {
       }
 
       const { produtoId, quantidade } = req.body;
-
-      let carrinho = await Carrinho.findOne({ where: { clienteId } });
-      if (!carrinho) {
-        carrinho = await Carrinho.create({ clienteId });
-      }
+      const [carrinho] = await Carrinho.findOrCreate({
+        where: { clienteId: Number(clienteId) },
+      });
 
       let item = await CarrinhoItem.findOne({ where: { CarrinhoId: carrinho.id, ProdutoId: produtoId } });
-
       if (item) {
-        // Atualiza quantidade
         item.quantidade += quantidade;
         await item.save();
       } else {
@@ -60,7 +64,8 @@ module.exports = {
 
       res.status(201).json(item);
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao adicionar item no carrinho' });
+      console.error('Erro ao adicionar item:', error);
+      res.status(500).json({ erro: 'Erro ao adicionar item no carrinho', detalhes: error.message });
     }
   },
 
@@ -75,7 +80,7 @@ module.exports = {
 
       const { quantidade } = req.body;
 
-      const carrinho = await Carrinho.findOne({ where: { clienteId } });
+      const carrinho = await Carrinho.findOne({ where: { clienteId: Number(clienteId) } });
       if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });
 
       const item = await CarrinhoItem.findOne({ where: { id: itemId, CarrinhoId: carrinho.id } });
@@ -85,8 +90,10 @@ module.exports = {
       await item.save();
 
       res.json(item);
-    } catch (error) {
-      res.status(500).json({ erro: 'Erro ao atualizar item' });
+    } catch (error)
+        {
+      console.error('Erro ao atualizar item:', error);
+      res.status(500).json({ erro: 'Erro ao atualizar item', detalhes: error.message });
     }
   },
 
@@ -99,7 +106,7 @@ module.exports = {
         return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
       }
 
-      const carrinho = await Carrinho.findOne({ where: { clienteId } });
+      const carrinho = await Carrinho.findOne({ where: { clienteId: Number(clienteId) } });
       if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });
 
       const item = await CarrinhoItem.findOne({ where: { id: itemId, CarrinhoId: carrinho.id } });
@@ -108,11 +115,12 @@ module.exports = {
       await item.destroy();
       res.json({ mensagem: 'Item removido do carrinho' });
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao remover item' });
+      console.error('Erro ao remover item:', error);
+      res.status(500).json({ erro: 'Erro ao remover item', detalhes: error.message });
     }
   },
 
-  // Limpar carrinho inteiro (opcional)
+  // Limpar carrinho inteiro
   async limparCarrinho(req, res) {
     try {
       const { clienteId } = req.params;
@@ -121,14 +129,15 @@ module.exports = {
         return res.status(403).json({ erro: 'Você só pode acessar seu próprio carrinho' });
       }
 
-      const carrinho = await Carrinho.findOne({ where: { clienteId } });
+      const carrinho = await Carrinho.findOne({ where: { clienteId: Number(clienteId) } });
       if (!carrinho) return res.status(404).json({ erro: 'Carrinho não encontrado' });
 
       await CarrinhoItem.destroy({ where: { CarrinhoId: carrinho.id } });
 
       res.json({ mensagem: 'Carrinho limpo com sucesso' });
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao limpar carrinho' });
+      console.error('Erro ao limpar carrinho:', error);
+      res.status(500).json({ erro: 'Erro ao limpar carrinho', detalhes: error.message });
     }
   }
 };
