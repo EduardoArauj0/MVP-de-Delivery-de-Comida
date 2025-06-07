@@ -12,7 +12,9 @@ module.exports = {
       const userExists = await User.findOne({ where: { email } });
       if (userExists) return res.status(400).json({ erro: 'Email já cadastrado' });
 
-      const user = await User.create({ nome, email, senha, tipo });
+      const tipoPermitido = tipo === 'admin' ? 'cliente' : tipo;
+
+      const user = await User.create({ nome, email, senha, tipo: tipoPermitido });
       res.status(201).json({ id: user.id, nome: user.nome, email: user.email, tipo: user.tipo });
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao criar usuário', detalhes: error.message });
@@ -29,14 +31,14 @@ module.exports = {
       const valid = await bcrypt.compare(senha, user.senha);
       if (!valid) return res.status(401).json({ erro: 'Usuário ou senha inválidos' });
 
-      const token = jwt.sign({ id: user.id, tipo: user.tipo }, JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.id, tipo: user.tipo }, JWT_SECRET, { expiresIn: '8h' });
       res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, tipo: user.tipo } });
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao fazer login' });
     }
   },
 
-  // Listar usuários (opcional, só admins)
+  // Listar usuários
   async listar(req, res) {
     try {
       const users = await User.findAll({ attributes: ['id', 'nome', 'email', 'tipo'] });
@@ -61,19 +63,27 @@ module.exports = {
   async atualizar(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
+      if (!user) return res.status(404).json({ erro: 'Usuário não encontrado.' });
+
       if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
         return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
       }
 
-      const campos = ['nome', 'email', 'senha', 'tipo'];
-      campos.forEach(campo => {
-        if (req.body[campo]) user[campo] = req.body[campo];
-      });
+     
+      const { nome, email, senha, tipo } = req.body;
+
+      if (nome) user.nome = nome;
+      if (email) user.email = email;
+      if (senha) user.senha = senha;
+      
+      if (tipo && req.user.tipo === 'admin') {
+        user.tipo = tipo;
+      }
 
       await user.save();
       res.json({ id: user.id, nome: user.nome, email: user.email, tipo: user.tipo });
     } catch (error) {
-      res.status(500).json({ erro: 'Erro ao atualizar usuário' });
+      res.status(500).json({ erro: 'Erro ao atualizar usuário', detalhes: error.message });
     }
   },
 
@@ -81,8 +91,10 @@ module.exports = {
   async remover(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
+      if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
+
       if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
-        return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
+        return res.status(403).json({ erro: 'Você não tem permissão para remover outro usuário' });
       }
       
       await user.destroy();
