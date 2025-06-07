@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
@@ -7,6 +7,12 @@ export default function HeaderPublico({ busca, setBusca }) {
   const { user, logout } = useAuth();
   const { itemCount, totalAmount } = useCart();
   const [endereco] = useState('Selecionar endereço');
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="bg-white border-bottom shadow-sm sticky-top">
@@ -17,7 +23,7 @@ export default function HeaderPublico({ busca, setBusca }) {
           <Link to="/" className="nav-link">Restaurantes</Link>
         </div>
         
-          {setBusca && (
+        {setBusca && (
             <input
                 type="text"
                 className="form-control w-25"
@@ -36,7 +42,7 @@ export default function HeaderPublico({ busca, setBusca }) {
           {user ? (
             <>
               <span className="navbar-text">Olá, {user.nome.split(' ')[0]}</span>
-              <button className="btn btn-outline-dark" onClick={logout}>Sair</button>
+              <button className="btn btn-outline-dark" onClick={handleLogout}>Sair</button>
             </>
           ) : (
             <Link to="/login" className="btn btn-outline-danger">Entrar</Link>
