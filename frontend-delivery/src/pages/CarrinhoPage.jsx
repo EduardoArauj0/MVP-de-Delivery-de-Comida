@@ -6,6 +6,7 @@ import HeaderPublico from '../components/HeaderPublico';
 import { useNavigate, Link } from 'react-router-dom';
 import modoPagamentoService from '../services/modoPagamentoService';
 import pedidoService from '../services/pedidoService';
+import restauranteService from '../services/restauranteService';
 
 export default function CarrinhoPage() {
   const { user } = useAuth();
@@ -25,11 +26,34 @@ export default function CarrinhoPage() {
 
   const [formasPagamento, setFormasPagamento] = useState([]);
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
-
+  const [enderecoEntrega, setEnderecoEntrega] = useState('');
+  const [taxaFrete, setTaxaFrete] = useState(0);
+  const [valorTotalPedido, setValorTotalPedido] = useState(0);
   const [erroCheckout, setErroCheckout] = useState('');
   const [sucessoCheckout, setSucessoCheckout] = useState('');
 
-  // Carregar formas de pagamento
+  useEffect(() => {
+    async function buscarTaxaFrete() {
+      if (cartRestaurantId) {
+        try {
+          const res = await restauranteService.buscarPorId(cartRestaurantId);
+          setTaxaFrete(parseFloat(res.data.taxaFrete) || 0);
+        } catch (error) {
+          console.error("Erro ao buscar taxa de frete", error);
+          setTaxaFrete(0);
+        }
+      } else {
+        setTaxaFrete(0);
+      }
+    }
+    buscarTaxaFrete();
+  }, [cartRestaurantId]);
+
+  useEffect(() => {
+    setValorTotalPedido(totalAmount + taxaFrete);
+  }, [totalAmount, taxaFrete]);
+
+
   useEffect(() => {
     async function carregarDadosCheckout() {
       try {
@@ -59,6 +83,10 @@ export default function CarrinhoPage() {
       setErroCheckout('Escolha uma forma de pagamento.');
       return;
     }
+    if (!enderecoEntrega.trim()) {
+      setErroCheckout('Por favor, informe o endereço de entrega.');
+      return;
+    }
     if (!cartItems || cartItems.length === 0) {
       setErroCheckout('Seu carrinho está vazio.');
       return;
@@ -77,6 +105,7 @@ export default function CarrinhoPage() {
         restauranteId: parseInt(cartRestaurantId),
         formaPagamentoId: parseInt(formaPagamentoId),
         itens: itensPedido,
+        enderecoEntrega: enderecoEntrega,
       });
 
       setSucessoCheckout('Pedido realizado com sucesso! Você será redirecionado para Meus Pedidos.');
@@ -169,36 +198,53 @@ export default function CarrinhoPage() {
                       <span>Subtotal ({itemCount} itens):</span>
                       <span>R$ {totalAmount.toFixed(2)}</span>
                     </div>
-                      <div className="d-flex justify-content-between mb-3">
+                    <div className="d-flex justify-content-between mb-3">
                       <span>Taxa de entrega:</span>
-                      <span>R$ X.XX</span>
+                      <span className={taxaFrete === 0 ? 'text-success' : ''}>
+                        {taxaFrete > 0 ? `R$ ${taxaFrete.toFixed(2)}` : 'Grátis'}
+                      </span>
                     </div>
                     <div className="d-flex justify-content-between fw-bold fs-5">
                       <span>Total:</span>
-                      <span>R$ {totalAmount.toFixed(2)}</span>
+                      <span>R$ {valorTotalPedido.toFixed(2)}</span>
                     </div>
                     <hr />
                     {user && (
-                        <div className="mb-3">
-                            <label htmlFor="formaPagamento" className="form-label">Forma de Pagamento</label>
-                            <select
-                            id="formaPagamento"
-                            className="form-select"
-                            value={formaPagamentoId}
-                            onChange={e => setFormaPagamentoId(e.target.value)}
-                            required
-                            >
-                            <option value="">Selecione...</option>
-                            {formasPagamento.map(fp => (
-                                <option key={fp.id} value={fp.id}>{fp.nome}</option>
-                            ))}
-                            </select>
-                        </div>
+                        <>
+                          <div className="mb-3">
+                            <label htmlFor="enderecoEntrega" className="form-label">Endereço de Entrega</label>
+                            <input
+                              type="text"
+                              id="enderecoEntrega"
+                              className="form-control"
+                              value={enderecoEntrega}
+                              onChange={e => setEnderecoEntrega(e.target.value)}
+                              placeholder="Ex: Rua das Flores, 123, Bairro"
+                              required
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                              <label htmlFor="formaPagamento" className="form-label">Forma de Pagamento</label>
+                              <select
+                              id="formaPagamento"
+                              className="form-select"
+                              value={formaPagamentoId}
+                              onChange={e => setFormaPagamentoId(e.target.value)}
+                              required
+                              >
+                              <option value="">Selecione...</option>
+                              {formasPagamento.map(fp => (
+                                  <option key={fp.id} value={fp.id}>{fp.nome}</option>
+                              ))}
+                              </select>
+                          </div>
+                        </>
                     )}
                     <button
                         className="btn btn-success w-100 btn-lg mt-2"
                         onClick={handleFinalizarPedido}
-                        disabled={loadingCart || (user && !formaPagamentoId)}
+                        disabled={loadingCart || (user && (!formaPagamentoId || !enderecoEntrega))}
                     >
                       {user ? 'Finalizar Pedido' : 'Fazer Login para Finalizar'}
                     </button>
