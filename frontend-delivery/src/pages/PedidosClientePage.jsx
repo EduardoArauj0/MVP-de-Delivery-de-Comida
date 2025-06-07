@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import HeaderCliente from '../components/HeaderCliente';
 import pedidoService from '../services/pedidoService';
 import ModalAvaliacao from '../components/ModalAvaliacao';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import HeaderCliente from '../components/HeaderCliente';
 import HeaderPublico from '../components/HeaderPublico';

@@ -5,7 +5,7 @@ import HeaderPublico from '../components/HeaderPublico';
 import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
 import avaliacaoService from '../services/avaliacaoService';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 
 export default function RestaurantePage() {

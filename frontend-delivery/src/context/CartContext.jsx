@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import carrinhoService from '../services/carrinhoService';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 export const CartContext = createContext(); 
 const LOCAL_STORAGE_CART_KEY = 'deliveryAppLocalCart';

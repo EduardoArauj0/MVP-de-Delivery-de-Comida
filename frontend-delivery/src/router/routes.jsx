@@ -8,7 +8,7 @@ import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user } = useAuth();

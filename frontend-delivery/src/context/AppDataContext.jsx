@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import cozinhaService from '../services/cozinhaService';
 import modoPagamentoService from '../services/modoPagamentoService';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 const AppDataContext = createContext();
 
 export const AppDataProvider = ({ children }) => {
