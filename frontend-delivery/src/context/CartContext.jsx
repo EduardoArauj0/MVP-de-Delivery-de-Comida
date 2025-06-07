@@ -1,8 +1,8 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import carrinhoService from '../services/carrinhoService';
 import { useAuth } from './AuthContext';
 
-const CartContext = createContext();
+export const CartContext = createContext(); 
 const LOCAL_STORAGE_CART_KEY = 'deliveryAppLocalCart';
 
 export const CartProvider = ({ children }) => {
@@ -11,8 +11,9 @@ export const CartProvider = ({ children }) => {
   const [loadingCart, setLoadingCart] = useState(false);
   const [cartError, setCartError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  
+  const lastAddedRef = useRef(null);
 
-  // Função para carregar o carrinho do localStorage
   const loadLocalCart = useCallback(() => {
     const localCartString = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
     if (localCartString) {
@@ -34,7 +35,6 @@ export const CartProvider = ({ children }) => {
     return { id: 'local', clienteId: null, CarrinhoItems: [], restauranteId: null, restauranteNome: null };
   }, []);
 
-  // Função para salvar o carrinho no localStorage
   const saveLocalCart = useCallback((currentCart) => {
     if (currentCart && currentCart.id === 'local') {
       const simplifiedItems = currentCart.CarrinhoItems.map(item => ({
@@ -115,54 +115,61 @@ export const CartProvider = ({ children }) => {
   }, [user]);
 
   const addItemToCart = async (produto, quantidade) => {
+    const now = Date.now();
+    if (lastAddedRef.current && 
+        lastAddedRef.current.productId === produto.id && 
+        (now - lastAddedRef.current.timestamp) < 500) {
+        console.warn("Ignorando adição duplicada rápida do mesmo produto.");
+        return false;
+    }
+    lastAddedRef.current = { productId: produto.id, timestamp: now };
+    
     setLoadingCart(true);
     setCartError(null);
-    const itemData = { produtoId: produto.id, quantidade };
-
-    if (user?.id && user.tipo === 'cliente') {
-      try {
+    
+    try {
+      if (user?.id && user.tipo === 'cliente') {
+        const itemData = { produtoId: produto.id, quantidade };
         await carrinhoService.adicionarItem(user.id, itemData);
         await fetchBackendCart();
         return true;
-      } catch (error) {
-        console.error('Erro ao adicionar item ao carrinho (backend):', error);
-        setCartError(error.response?.data?.erro || 'Erro ao adicionar item.');
-        await fetchBackendCart(); 
-        return false;
-      } finally {
-        setLoadingCart(false);
+      } else {
+        setCart(prevCart => {
+          const cartToUpdate = prevCart ? prevCart : loadLocalCart();
+          const newCart = JSON.parse(JSON.stringify(cartToUpdate));
+
+          if (newCart.restauranteId && newCart.restauranteId !== produto.RestauranteId) {
+              if (!window.confirm(`Seu carrinho atual contém itens do restaurante "${newCart.restauranteNome}". Deseja limpar o carrinho e adicionar itens deste novo restaurante?`)) {
+                  return prevCart;
+              }
+              newCart.CarrinhoItems = [];
+              newCart.restauranteId = null;
+              newCart.restauranteNome = null;
+          }
+          if (!newCart.restauranteId && produto.RestauranteId) {
+              newCart.restauranteId = produto.RestauranteId;
+              newCart.restauranteNome = produto.Restaurante?.nome || "Restaurante Desconhecido";
+          }
+
+          const existingItemIndex = newCart.CarrinhoItems.findIndex(i => i.Produto.id === produto.id);
+          if (existingItemIndex > -1) {
+            newCart.CarrinhoItems[existingItemIndex].quantidade += quantidade;
+          } else {
+            newCart.CarrinhoItems.push({ Produto: produto, quantidade, id: `local-${produto.id}` });
+          }
+          
+          saveLocalCart(newCart);
+          return newCart;
+        });
+        return true;
       }
-    } else {
-      // Lógica para carrinho local
-      setCart(prevCart => {
-        const newCart = prevCart ? { ...prevCart } : loadLocalCart();
-
-        if (newCart.restauranteId && newCart.restauranteId !== produto.RestauranteId) {
-            if (!window.confirm(`Seu carrinho atual contém itens do restaurante "${newCart.restauranteNome}". Deseja limpar o carrinho e adicionar itens deste novo restaurante?`)) {
-                setLoadingCart(false);
-                return prevCart;
-            }
-            newCart.CarrinhoItems = [];
-            newCart.restauranteId = null;
-            newCart.restauranteNome = null;
-        }
-
-        if (!newCart.restauranteId && produto.RestauranteId) {
-            newCart.restauranteId = produto.RestauranteId;
-            newCart.restauranteNome = produto.Restaurante?.nome || "Restaurante Desconhecido";
-        }
-        
-        const existingItemIndex = newCart.CarrinhoItems.findIndex(i => i.Produto.id === produto.id);
-        if (existingItemIndex > -1) {
-          newCart.CarrinhoItems[existingItemIndex].quantidade += quantidade;
-        } else {
-          newCart.CarrinhoItems.push({ Produto: produto, quantidade, id: `local-${produto.id}` });
-        }
-        saveLocalCart(newCart);
-        return newCart;
-      });
-      setLoadingCart(false);
-      return true;
+    } catch (error) {
+        console.error('Erro ao adicionar item ao carrinho:', error);
+        setCartError(error.response?.data?.erro || 'Erro ao adicionar item.');
+        if (user?.id) await fetchBackendCart();
+        return false;
+    } finally {
+        setLoadingCart(false);
     }
   };
 
@@ -177,38 +184,37 @@ export const CartProvider = ({ children }) => {
         return;
       }
       if (quantidade <= 0) return removeItemFromCart(backendItem.id, produtoId);
-
       try {
         await carrinhoService.atualizarItem(user.id, backendItem.id, { quantidade });
         await fetchBackendCart();
       } catch (error) {
-        console.error('Erro ao atualizar quantidade (backend):', error);
         setCartError(error.response?.data?.erro || 'Erro ao atualizar item.');
         await fetchBackendCart();
       } finally {
         setLoadingCart(false);
       }
     } else {
-      // Lógica para carrinho local
-      setCart(prevCart => {
-        const newCart = { ...prevCart };
-        const itemIndex = newCart.CarrinhoItems.findIndex(i => i.Produto.id === produtoId);
-        if (itemIndex > -1) {
-          if (quantidade <= 0) {
-            newCart.CarrinhoItems.splice(itemIndex, 1);
-            if(newCart.CarrinhoItems.length === 0){ 
-                newCart.restauranteId = null;
-                newCart.restauranteNome = null;
+        setCart(prevCart => {
+            if (!prevCart) return null;
+            const newCart = JSON.parse(JSON.stringify(prevCart));
+            const itemIndex = newCart.CarrinhoItems.findIndex(i => i.Produto.id === produtoId);
+
+            if (itemIndex > -1) {
+                if (quantidade <= 0) {
+                    newCart.CarrinhoItems = newCart.CarrinhoItems.filter((_, index) => index !== itemIndex);
+                } else {
+                    newCart.CarrinhoItems[itemIndex].quantidade = quantidade;
+                }
+                if (newCart.CarrinhoItems.length === 0) {
+                    newCart.restauranteId = null;
+                    newCart.restauranteNome = null;
+                }
+                saveLocalCart(newCart);
+                return newCart;
             }
-          } else {
-            newCart.CarrinhoItems[itemIndex].quantidade = quantidade;
-          }
-          saveLocalCart(newCart);
-          return newCart;
-        }
-        return prevCart; 
-      });
-      setLoadingCart(false);
+            return prevCart;
+        });
+        setLoadingCart(false);
     }
   };
 
@@ -237,7 +243,6 @@ export const CartProvider = ({ children }) => {
         setLoadingCart(false);
       }
     } else {
-      // Lógica para carrinho local
       setCart(prevCart => {
         const newCart = { ...prevCart };
         newCart.CarrinhoItems = newCart.CarrinhoItems.filter(i => i.Produto.id !== (produtoId || itemId) ); 
@@ -313,5 +318,3 @@ export const CartProvider = ({ children }) => {
     </CartContext.Provider>
   );
 };
-
-export const useCart = () => useContext(CartContext);

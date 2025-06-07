@@ -6,7 +6,7 @@ import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
 import avaliacaoService from '../services/avaliacaoService';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../hooks/useCart';
 
 export default function RestaurantePage() {
   const { id } = useParams();

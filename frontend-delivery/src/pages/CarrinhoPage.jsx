@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../hooks/useCart';
 import HeaderCliente from '../components/HeaderCliente';
 import HeaderPublico from '../components/HeaderPublico';
 import { useNavigate, Link } from 'react-router-dom';

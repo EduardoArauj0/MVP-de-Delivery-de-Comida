@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../hooks/useCart';
 
 export default function HeaderPublico({ busca, setBusca }) {
   const { user, logout } = useAuth();
