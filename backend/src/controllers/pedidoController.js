@@ -1,4 +1,4 @@
-const { Pedido, ItemPedido, Produto, Restaurante, User, ModoPagamento, Avaliacao } = require('../models');
+const { Pedido, ItemPedido, Produto, Restaurante, User, ModoPagamento, Avaliacao, sequelize } = require('../models');
 
 const includeOptions = [
   { model: Restaurante, as: 'restaurantePedido' },
@@ -11,32 +11,70 @@ const includeOptions = [
 module.exports = {
   // Criar pedido com itens
   async criar(req, res) {
+    const t = await sequelize.transaction();
+
     try {
-      const { clienteId, restauranteId, formaPagamentoId, itens } = req.body;
+      const { clienteId, restauranteId, formaPagamentoId, itens, enderecoEntrega } = req.body;
 
       if(req.user.id !== clienteId) {
+          await t.rollback();
           return res.status(403).json({ erro: 'Você só pode criar pedidos para si mesmo.' });
       }
-
-      const pedido = await Pedido.create({ clienteId, RestauranteId: restauranteId, formaPagamentoId });
-
-      for (const item of itens) {
-        const { produtoId, quantidade } = item;
-        const produto = await Produto.findByPk(produtoId);
-        if(!produto) throw new Error(`Produto com ID ${produtoId} não encontrado.`);
-        
-        await ItemPedido.create({
-          PedidoId: pedido.id,
-          ProdutoId: produtoId,
-          quantidade,
-          precoUnitario: produto.preco
-        });
+      if (!itens || itens.length === 0) {
+          await t.rollback();
+          return res.status(400).json({ erro: 'O pedido precisa conter pelo menos um item.' });
+      }
+      if (!enderecoEntrega) {
+          await t.rollback();
+          return res.status(400).json({ erro: 'O endereço de entrega é obrigatório.' });
       }
 
-      const pedidoCompleto = await Pedido.findByPk(pedido.id, { include: includeOptions });
+      const restaurante = await Restaurante.findByPk(restauranteId, { transaction: t });
+      if (!restaurante) throw new Error('Restaurante não encontrado.');
 
+      const produtoIds = itens.map(item => item.produtoId);
+      const produtosDoBanco = await Produto.findAll({ where: { id: produtoIds }, transaction: t });
+      
+      let subtotal = 0;
+      for (const item of itens) {
+        const produtoCorrespondente = produtosDoBanco.find(p => p.id === item.produtoId);
+        if (!produtoCorrespondente) throw new Error(`Produto com ID ${item.produtoId} não encontrado.`);
+        subtotal += item.quantidade * produtoCorrespondente.preco;
+      }
+      
+      const taxaFrete = restaurante.taxaFrete;
+      const valorTotal = subtotal + taxaFrete;
+
+      const pedido = await Pedido.create({
+        clienteId,
+        RestauranteId: restauranteId,
+        formaPagamentoId,
+        enderecoEntrega,
+        subtotal,
+        taxaFrete,
+        valorTotal,
+        status: 'pendente'
+      }, { transaction: t });
+
+      const itensParaCriar = itens.map(item => {
+        const produtoCorrespondente = produtosDoBanco.find(p => p.id === item.produtoId);
+        return {
+          PedidoId: pedido.id,
+          ProdutoId: item.produtoId,
+          quantidade: item.quantidade,
+          precoUnitario: produtoCorrespondente.preco
+        };
+      });
+
+      await ItemPedido.bulkCreate(itensParaCriar, { transaction: t });
+
+      await t.commit();
+
+      const pedidoCompleto = await Pedido.findByPk(pedido.id, { include: includeOptions });
       res.status(201).json(pedidoCompleto);
+
     } catch (error) {
+      await t.rollback();
       res.status(500).json({ erro: 'Erro ao criar pedido', detalhes: error.message });
     }
   },
