@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import HeaderCliente from '../components/HeaderCliente';
 import HeaderPublico from '../components/HeaderPublico';
+import HeaderAdmin from '../components/HeaderAdmin';
+import HeaderEmpresa from '../components/HeaderEmpresa';
 import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
 import avaliacaoService from '../services/avaliacaoService';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useHasPermission } from '../hooks/useHasPermission';
 
 export default function RestaurantePage() {
   const { id } = useParams();
@@ -18,6 +21,10 @@ export default function RestaurantePage() {
   const [mediaAvaliacoes, setMediaAvaliacoes] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [feedbackError, setFeedbackError] = useState('');
+
+  const isCliente = useHasPermission(['PLACE_ORDER']);
+  const isEmpresa = useHasPermission(['MANAGE_RESTAURANT']);
+  const isAdmin = useHasPermission(['MANAGE_SYSTEM']);
 
   useEffect(() => {
     async function fetchData() {
@@ -68,11 +75,19 @@ export default function RestaurantePage() {
     return <span className="text-warning">{stars}</span>;
   }
 
+  const renderHeader = () => {
+    if (!user) return <HeaderPublico busca="" setBusca={() => {}} />;
+    if (isAdmin) return <HeaderAdmin />;
+    if (isEmpresa) return <HeaderEmpresa />;
+    if (isCliente) return <HeaderCliente />;
+    return <HeaderPublico busca="" setBusca={() => {}} />;
+  };
+
   if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
 
   return (
     <>
-      { user ? <HeaderCliente /> : <HeaderPublico busca="" setBusca={() => {}} /> }
+      {renderHeader()}
       <div className="container py-4">
         <div className="mb-4">
           <img
@@ -100,9 +115,11 @@ export default function RestaurantePage() {
                   <h5 className="card-title">{prod.nome}</h5>
                   <p className="card-text">{prod.descricao}</p>
                   <p className="card-text fw-bold">R$ {parseFloat(prod.preco).toFixed(2)}</p>
-                  <button className="btn btn-success w-100 mt-auto" onClick={() => handleAdicionarAoCarrinho(prod)}>
-                    Adicionar ao carrinho
-                  </button>
+                  {isCliente && (
+                    <button className="btn btn-success w-100 mt-auto" onClick={() => handleAdicionarAoCarrinho(prod)}>
+                        Adicionar ao carrinho
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -111,7 +128,6 @@ export default function RestaurantePage() {
 
         <hr className="my-5" />
 
-        {/* Seção de Avaliações */}
         <div>
           <h4 className="mb-3">
             Avaliações ({avaliacoes.length}) - Média: {mediaAvaliacoes.toFixed(1)} <span className='text-warning'>★</span>
@@ -121,7 +137,7 @@ export default function RestaurantePage() {
               <div className="card mb-3" key={aval.id}>
                 <div className="card-body">
                   <div className='d-flex justify-content-between'>
-                    <strong>{aval.Pedido.cliente.nome}</strong>
+                    <strong>{aval.avaliador.nome}</strong>
                     <span>{renderStars(aval.nota)}</span>
                   </div>
                   <p className="card-text mt-2 mb-0">{aval.comentario}</p>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import userService from '../services/userService';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', tipo: 'cliente' });
+  const [form, setForm] = useState({ nome: '', email: '', senha: '' });
   const [erro, setErro] = useState('');
 
   const handleChange = (e) => {
@@ -40,14 +40,11 @@ export default function Register() {
           <label className="form-label">Senha</label>
           <input type="password" name="senha" className="form-control" value={form.senha} onChange={handleChange} required />
         </div>
-        <div className="mb-3">
-          <label className="form-label">Tipo</label>
-          <select name="tipo" className="form-select" value={form.tipo} onChange={handleChange}>
-            <option value="cliente">Cliente</option>
-            <option value="empresa">Empresa</option>
-          </select>
-        </div>
         <button type="submit" className="btn btn-primary w-100">Cadastrar</button>
+        <div className="text-center mt-3">
+          <span>Já tem conta? </span>
+          <Link to="/login" className="text-danger fw-bold">Faça login</Link>
+        </div>
       </form>
     </div>
   );

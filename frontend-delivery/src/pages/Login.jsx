@@ -15,13 +15,13 @@ export default function Login() {
 
   useEffect(() => {
     if (!loadingAuth && user) {
-      const redirectPath = new URLSearchParams(location.search).get('redirect') || '/';
-      if (user.tipo === 'cliente') {
-        navigate(redirectPath, { replace: true });
-      } else if (user.tipo === 'empresa') {
-        navigate('/dashboard-empresa', { replace: true });
-      } else if (user.tipo === 'admin') {
+      if (user.permissoes?.includes('MANAGE_SYSTEM')) {
         navigate('/dashboard-admin', { replace: true });
+      } else if (user.permissoes?.includes('MANAGE_RESTAURANT')) {
+        navigate('/dashboard-empresa', { replace: true });
+      } else {
+        const redirectPath = new URLSearchParams(location.search).get('redirect') || '/';
+        navigate(redirectPath, { replace: true });
       }
     }
   }, [user, loadingAuth, navigate, location.search]);
@@ -36,6 +36,7 @@ export default function Login() {
     } catch (err) {
       console.error(err);
       setErro(err.response?.data?.erro || 'Email ou senha inválidos');
+    } finally {
       setIsSubmitting(false);
     }
   }
@@ -47,25 +48,11 @@ export default function Login() {
         {erro && <div className="alert alert-danger">{erro}</div>}
         <div className="mb-3">
           <label className="form-label">Email</label>
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isSubmitting}
-          />
+          <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSubmitting} />
         </div>
         <div className="mb-3">
           <label className="form-label">Senha</label>
-          <input
-            type="password"
-            className="form-control"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-            disabled={isSubmitting}
-          />
+          <input type="password" className="form-control" value={senha} onChange={(e) => setSenha(e.target.value)} required disabled={isSubmitting} />
         </div>
         <button type="submit" className="btn btn-danger w-100" disabled={isSubmitting}>
           {isSubmitting ? 'Entrando...' : 'Entrar'}

@@ -8,6 +8,7 @@ import modoPagamentoService from '../services/modoPagamentoService';
 import pedidoService from '../services/pedidoService';
 import restauranteService from '../services/restauranteService';
 import enderecoService from '../services/enderecoService';
+import { useHasPermission } from '../hooks/useHasPermission';
 
 export default function CarrinhoPage() {
   const { user } = useAuth();
@@ -26,13 +27,15 @@ export default function CarrinhoPage() {
   const navigate = useNavigate();
 
   const [formasPagamento, setFormasPagamento] = useState([]);
-  const [enderecos, setEnderecos] = useState([]); 
+  const [enderecos, setEnderecos] = useState([]);
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [enderecoEntregaId, setEnderecoEntregaId] = useState('');
   const [taxaFrete, setTaxaFrete] = useState(0);
   const [valorTotalPedido, setValorTotalPedido] = useState(0);
   const [erroCheckout, setErroCheckout] = useState('');
   const [sucessoCheckout, setSucessoCheckout] = useState('');
+  
+  const isCliente = useHasPermission(['PLACE_ORDER']);
 
   useEffect(() => {
     async function buscarTaxaFrete() {
@@ -66,7 +69,6 @@ export default function CarrinhoPage() {
         ]);
         setFormasPagamento(pagamentoRes.data);
         setEnderecos(enderecosRes.data);
-
         if (enderecosRes.data.length > 0) {
           setEnderecoEntregaId(enderecosRes.data[0].id);
         }
@@ -92,16 +94,15 @@ export default function CarrinhoPage() {
       setErroCheckout('Escolha uma forma de pagamento.');
       return;
     }
+    if (!enderecoEntregaId) {
+      setErroCheckout('Por favor, selecione ou cadastre um endereço de entrega no seu perfil.');
+      return;
+    }
     if (!cartItems || cartItems.length === 0) {
       setErroCheckout('Seu carrinho está vazio.');
       return;
     }
     
-    if (!enderecoEntregaId) {
-      setErroCheckout('Por favor, selecione ou cadastre um endereço de entrega no seu perfil.');
-      return;
-    }
-
     const enderecoSelecionado = enderecos.find(e => e.id === parseInt(enderecoEntregaId));
     if (!enderecoSelecionado) {
         setErroCheckout('Endereço selecionado não é válido.');
@@ -141,7 +142,7 @@ export default function CarrinhoPage() {
 
   return (
     <>
-      {user ? <HeaderCliente /> : <HeaderPublico setBusca={() => {}} busca="" />}
+      {user && isCliente ? <HeaderCliente /> : <HeaderPublico setBusca={() => {}} busca="" />}
       <div className="container py-5">
         <h2 className="mb-4">Seu Carrinho</h2>
 
@@ -217,7 +218,7 @@ export default function CarrinhoPage() {
                     </div>
                     <div className="d-flex justify-content-between mb-3">
                       <span>Taxa de entrega:</span>
-                      <span className={taxaFrete === 0 ? 'text-success fw-bold' : ''}>
+                      <span className={taxaFrete === 0 ? 'text-success' : ''}>
                         {taxaFrete > 0 ? `R$ ${taxaFrete.toFixed(2)}` : 'Grátis'}
                       </span>
                     </div>
@@ -231,23 +232,21 @@ export default function CarrinhoPage() {
                           <div className="mb-3">
                             <label htmlFor="enderecoEntrega" className="form-label">Endereço de Entrega</label>
                             {enderecos.length > 0 ? (
-                              <select
+                                <select
                                 id="enderecoEntrega"
                                 className="form-select"
                                 value={enderecoEntregaId}
                                 onChange={e => setEnderecoEntregaId(e.target.value)}
                                 required
-                              >
+                                >
                                 {enderecos.map(end => (
-                                  <option key={end.id} value={end.id}>
-                                    {end.logradouro}, {end.numero} - {end.bairro}
-                                  </option>
+                                    <option key={end.id} value={end.id}>{end.logradouro}, {end.numero} - {end.bairro}</option>
                                 ))}
-                              </select>
+                                </select>
                             ) : (
-                              <div className="alert alert-warning">
-                                Nenhum endereço cadastrado. Por favor, adicione um no seu <Link to="/perfil">perfil</Link>.
-                              </div>
+                                <div className='alert alert-warning p-2'>
+                                    Nenhum endereço. <Link to="/perfil">Cadastre um aqui</Link>.
+                                </div>
                             )}
                           </div>
 

@@ -9,28 +9,33 @@ import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
 import ProdutoAdminPage from '../pages/admin/ProdutoAdminPage';
-import { useAuth } from '../hooks/useAuth';
 import ProfilePage from '../pages/ProfilePage';
+import { useAuth } from '../hooks/useAuth';
+import { useHasPermission } from '../hooks/useHasPermission';
 
-const PrivateRoute = ({ children, tipo }) => {
+const PrivateRoute = ({ children, permissoes }) => {
   const { user, loadingAuth } = useAuth();
+  
+  const temPermissao = useHasPermission(permissoes || []);
 
   if (loadingAuth) {
-    return <div className="container vh-100 d-flex justify-content-center align-items-center"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">Carregando...</span></div></div>;
+    return (
+      <div className="container vh-100 d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-danger" role="status">
+          <span className="visually-hidden">Carregando...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
-    return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
+    return <Navigate to={`/login?redirect=${window.location.pathname}`} replace />;
   }
   
-  const tiposPermitidos = tipo.split(',');
-  if (tipo && !tiposPermitidos.includes(user.tipo)) {
-    let redirectTo = '/';
-    if (user.tipo === 'empresa') redirectTo = '/dashboard-empresa';
-    if (user.tipo === 'admin') redirectTo = '/dashboard-admin';
-    
-    return <Navigate to={redirectTo} />;
+  if (permissoes && permissoes.length > 0 && !temPermissao) {
+    return <Navigate to="/" replace />;
   }
+  
   return children;
 };
 
@@ -39,17 +44,9 @@ export const routes = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   {
-    path: '/perfil',
-    element: (
-      <PrivateRoute tipo="cliente">
-        <ProfilePage />
-      </PrivateRoute>
-    )
-  },
-  {
     path: '/dashboard-empresa',
     element: (
-      <PrivateRoute tipo="empresa">
+      <PrivateRoute permissoes={['MANAGE_RESTAURANT']}>
         <DashboardEmpresa />
       </PrivateRoute>
     )
@@ -57,7 +54,7 @@ export const routes = createBrowserRouter([
   {
     path: '/dashboard-admin',
     element: (
-      <PrivateRoute tipo="admin">
+      <PrivateRoute permissoes={['MANAGE_SYSTEM']}>
         <DashboardAdmin />
       </PrivateRoute>
     )
@@ -73,7 +70,7 @@ export const routes = createBrowserRouter([
   {
     path: '/meus-pedidos',
     element: (
-      <PrivateRoute tipo="cliente">
+      <PrivateRoute permissoes={['VIEW_ORDERS_CLIENT']}>
         <PedidosClientePage />
       </PrivateRoute>
     )
@@ -81,15 +78,23 @@ export const routes = createBrowserRouter([
   {
     path: '/pedidos-recebidos',
     element: (
-      <PrivateRoute tipo="empresa,admin">
+      <PrivateRoute permissoes={['MANAGE_ORDERS_COMPANY']}>
         <PedidosRecebidosPage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/perfil',
+    element: (
+      <PrivateRoute permissoes={['PLACE_ORDER']}>
+        <ProfilePage />
       </PrivateRoute>
     )
   },
   {
     path: '/produto/novo',
     element: (
-      <PrivateRoute tipo="empresa">
+      <PrivateRoute permissoes={['MANAGE_PRODUCTS']}>
         <ProdutoAdminPage />
       </PrivateRoute>
     )
@@ -97,7 +102,7 @@ export const routes = createBrowserRouter([
   {
     path: '/produto/:produtoId/editar',
     element: (
-      <PrivateRoute tipo="empresa">
+      <PrivateRoute permissoes={['MANAGE_PRODUCTS']}>
         <ProdutoAdminPage />
       </PrivateRoute>
     )

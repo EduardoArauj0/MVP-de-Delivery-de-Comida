@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useHasPermission } from '../hooks/useHasPermission';
 
 export default function HeaderPublico({ busca, setBusca }) {
   const { user, logout } = useAuth();
   const { itemCount, totalAmount } = useCart();
-  const [endereco] = useState('Selecionar endereço');
   const navigate = useNavigate();
+
+  const canPlaceOrder = useHasPermission(['PLACE_ORDER']);
+  const showCart = !user || canPlaceOrder;
 
   const handleLogout = () => {
     logout();
@@ -34,11 +36,6 @@ export default function HeaderPublico({ busca, setBusca }) {
         )}
 
         <div className="d-flex align-items-center gap-3">
-          <button className="btn btn-outline-secondary" onClick={() => {
-            alert('Funcionalidade de seleção de endereço a ser implementada.');
-          }}>
-            {endereco}
-          </button>
           {user ? (
             <>
               <span className="navbar-text">Olá, {user.nome.split(' ')[0]}</span>
@@ -48,7 +45,7 @@ export default function HeaderPublico({ busca, setBusca }) {
             <Link to="/login" className="btn btn-outline-danger">Entrar</Link>
           )}
 
-          {(user?.tipo === 'cliente' || !user) && itemCount > 0 && (
+          {showCart && itemCount > 0 && (
             <Link to="/carrinho" className="position-relative text-decoration-none">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" className="bi bi-cart4" viewBox="0 0 16 16">
                 <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5zM3.14 5l.5 2H5V5H3.14zM6 5v2h2V5H6zm3 0v2h2V5H9zm3 0v2h1.36l.5-2H12zm1.11 3H12v2h.61l.5-2zM11 8H9v2h2V8zM8 8H6v2h2V8zM5 8H3.89l.5 2H5V8zm0 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0z"/>

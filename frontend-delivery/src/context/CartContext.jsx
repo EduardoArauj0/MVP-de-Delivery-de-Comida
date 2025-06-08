@@ -63,7 +63,6 @@ export const CartProvider = ({ children }) => {
         const response = await carrinhoService.obterCarrinho(user.id);
         const backendCart = response.data;
 
-        // Normaliza a estrutura do carrinho vindo do backend
         const normalizedCart = {
           id: backendCart.id,
           clienteId: backendCart.clienteId,
@@ -72,7 +71,7 @@ export const CartProvider = ({ children }) => {
           CarrinhoItems: backendCart.itensNoCarrinho?.map(item => ({
             id: item.id,
             quantidade: item.quantidade,
-            Produto: item.produtoCarrinho // Mapeia 'produtoCarrinho' para 'Produto'
+            Produto: item.produtoCarrinho 
           })) || []
         };
         
