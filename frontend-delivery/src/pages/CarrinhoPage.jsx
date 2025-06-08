@@ -151,7 +151,7 @@ export default function CarrinhoPage() {
               </thead>
               <tbody>
                 {cartItems?.map(item => (
-                  <tr key={item.Produto.id}>
+                  <tr key={item.id || item.Produto.id}>
                     <td>
                         <div className="d-flex align-items-center">
                             {item.Produto.imagem && (
@@ -159,7 +159,7 @@ export default function CarrinhoPage() {
                             )}
                             <div>
                                 {item.Produto.nome}
-                                {<small className="d-block text-muted">{item.Produto.descricao || ''}</small>}
+                                <small className="d-block text-muted">{item.Produto.descricao || ''}</small>
                             </div>
                         </div>
                     </td>

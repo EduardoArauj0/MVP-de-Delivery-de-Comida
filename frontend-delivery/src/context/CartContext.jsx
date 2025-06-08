@@ -61,7 +61,22 @@ export const CartProvider = ({ children }) => {
       setCartError(null);
       try {
         const response = await carrinhoService.obterCarrinho(user.id);
-        setCart(response.data);
+        const backendCart = response.data;
+
+        // Normaliza a estrutura do carrinho vindo do backend
+        const normalizedCart = {
+          id: backendCart.id,
+          clienteId: backendCart.clienteId,
+          restauranteId: backendCart.itensNoCarrinho?.[0]?.produtoCarrinho?.RestauranteId || null,
+          restauranteNome: backendCart.itensNoCarrinho?.[0]?.produtoCarrinho?.restauranteProduto?.nome || null,
+          CarrinhoItems: backendCart.itensNoCarrinho?.map(item => ({
+            id: item.id,
+            quantidade: item.quantidade,
+            Produto: item.produtoCarrinho // Mapeia 'produtoCarrinho' para 'Produto'
+          })) || []
+        };
+        
+        setCart(normalizedCart);
       } catch (error) {
         console.error('Erro ao buscar carrinho do backend:', error);
         setCartError(error.response?.data?.erro || 'Erro ao carregar carrinho do backend.');
@@ -112,7 +127,7 @@ export const CartProvider = ({ children }) => {
       setLoadingCart(false);
       setCartError(null);
     }
-  }, [user]);
+  }, [user, syncLocalCartWithBackend, loadLocalCart]);
 
   const addItemToCart = async (produto, quantidade) => {
     const now = Date.now();
