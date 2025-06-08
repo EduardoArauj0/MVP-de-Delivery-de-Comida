@@ -1,4 +1,5 @@
 const { Pedido, ItemPedido, Produto, Restaurante, User, ModoPagamento, Avaliacao, sequelize } = require('../models');
+const { v4: uuidv4 } = require('uuid');
 
 const includeOptions = [
   { model: Restaurante, as: 'restaurantePedido' },
@@ -43,9 +44,11 @@ module.exports = {
       }
       
       const taxaFrete = restaurante.taxaFrete;
-      const valorTotal = subtotal + taxaFrete;
+      const valorTotal = subtotal + parseFloat(taxaFrete);
+      const codigoPedido = `BR${Date.now()}${uuidv4().substring(0, 4).toUpperCase()}`;
 
       const pedido = await Pedido.create({
+        codigo: codigoPedido,
         clienteId,
         RestauranteId: restauranteId,
         formaPagamentoId,
@@ -62,7 +65,9 @@ module.exports = {
           PedidoId: pedido.id,
           ProdutoId: item.produtoId,
           quantidade: item.quantidade,
-          precoUnitario: produtoCorrespondente.preco
+          precoUnitario: produtoCorrespondente.preco,
+          precoTotal: item.quantidade * produtoCorrespondente.preco,
+          observacao: item.observacao || null,
         };
       });
 
@@ -130,11 +135,26 @@ module.exports = {
       const pedido = await Pedido.findByPk(req.params.id, { include: [{ model: Restaurante, as: 'restaurantePedido' }] });
       if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
 
-      if (pedido.restaurantePedido.empresaId !== req.user.id) {
+      if (req.user.tipo !== 'admin' && pedido.restaurantePedido.empresaId !== req.user.id) {
           return res.status(403).json({ erro: 'Acesso negado.'});
       }
+      
+      const novoStatus = req.body.status;
+      pedido.status = novoStatus;
 
-      pedido.status = req.body.status;
+      const now = new Date();
+      switch(novoStatus) {
+        case 'em preparo':
+            pedido.dataConfirmacao = now;
+            break;
+        case 'entregue':
+            pedido.dataEntrega = now;
+            break;
+        case 'cancelado':
+            pedido.dataCancelamento = now;
+            break;
+      }
+
       await pedido.save();
       res.json(pedido);
     } catch (error) {
@@ -148,7 +168,7 @@ module.exports = {
       const pedido = await Pedido.findByPk(req.params.id);
       if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
       
-      if (pedido.clienteId !== req.user.id) {
+      if (req.user.id !== pedido.clienteId) {
           return res.status(403).json({ erro: 'Acesso negado.'});
       }
 

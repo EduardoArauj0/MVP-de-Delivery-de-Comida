@@ -2,6 +2,11 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Pedido = sequelize.define('Pedido', {
+  codigo: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
   status: { 
     type: DataTypes.STRING, 
     defaultValue: 'pendente' 
@@ -23,6 +28,18 @@ const Pedido = sequelize.define('Pedido', {
   },
   enderecoEntrega: {
     type: DataTypes.STRING,
+    allowNull: true,
+  },
+  dataConfirmacao: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  dataEntrega: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  dataCancelamento: {
+    type: DataTypes.DATE,
     allowNull: true,
   }
 });

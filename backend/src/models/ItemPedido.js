@@ -9,6 +9,14 @@ const ItemPedido = sequelize.define('ItemPedido', {
   precoUnitario: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
+  },
+  precoTotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  observacao: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

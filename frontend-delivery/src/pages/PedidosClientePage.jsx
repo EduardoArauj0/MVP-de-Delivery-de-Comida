@@ -28,7 +28,9 @@ export default function PedidosClientePage() {
   };
 
   useEffect(() => {
-    buscarPedidos();
+    if (user) {
+      buscarPedidos();
+    }
   }, [user]);
 
   const handleShowModal = (pedidoId) => {
@@ -42,7 +44,7 @@ export default function PedidosClientePage() {
   };
   
   const handleAvaliacaoSuccess = () => {
-    buscarPedidos(); 
+    buscarPedidos();
   };
 
   if (loading) {
@@ -72,9 +74,9 @@ export default function PedidosClientePage() {
             <div className="card shadow-sm mb-4" key={pedido.id}>
               <div className="card-header d-flex justify-content-between align-items-center bg-light">
                 <div>
-                    <strong className="me-2">Pedido #{pedido.id}</strong>
+                    <strong className="me-2">Pedido #{pedido.codigo}</strong>
                     <small className="text-muted">
-                        Realizado em: {new Date(pedido.createdAt).toLocaleDateString('pt-BR')}
+                        Realizado em: {new Date(pedido.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </small>
                 </div>
                 <span className="badge bg-primary text-capitalize">{pedido.status}</span>
@@ -88,8 +90,11 @@ export default function PedidosClientePage() {
                 <ul className="list-group list-group-flush mb-3">
                   {pedido.itensDoPedido && pedido.itensDoPedido.map(item => (
                     <li className="list-group-item d-flex justify-content-between" key={item.id}>
-                      <span>{item.quantidade}x {item.produtoItem?.nome}</span>
-                      <span>R$ {(item.precoUnitario * item.quantidade).toFixed(2)}</span>
+                      <div>
+                        {item.quantidade}x {item.produtoItem?.nome}
+                        {item.observacao && <small className="d-block text-muted fst-italic">Obs: {item.observacao}</small>}
+                      </div>
+                      <span>R$ {parseFloat(item.precoTotal).toFixed(2)}</span>
                     </li>
                   ))}
                 </ul>
