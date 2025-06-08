@@ -10,7 +10,7 @@ function autenticar(req, res, next) {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload; // --> { id, tipo }
+    req.user = payload; // -> { id, nome, email, permissoes }
     next();
   } catch (error) {
     return res.status(401).json({ erro: 'Token inválido ou expirado' });

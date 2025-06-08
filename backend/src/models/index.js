@@ -11,6 +11,8 @@ const Carrinho = require('./Carrinho');
 const CarrinhoItem = require('./CarrinhoItem');
 const Cozinha = require('./Cozinha');
 const Endereco = require('./Endereco');
+const Grupo = require('./Grupo');
+const Permissao = require('./Permissao');
 
 // Restaurante - Empresa (User)
 User.hasMany(Restaurante, { foreignKey: 'empresaId' });
@@ -72,6 +74,14 @@ Produto.hasMany(CarrinhoItem, { as: 'carrinhosComProduto', foreignKey: 'ProdutoI
 User.hasMany(Endereco, { as: 'enderecos', foreignKey: 'UserId' });
 Endereco.belongsTo(User, { foreignKey: 'UserId' });
 
+// User <-> Grupo (Many-to-Many)
+User.belongsToMany(Grupo, { through: 'UsuarioGrupo', as: 'grupos' });
+Grupo.belongsToMany(User, { through: 'UsuarioGrupo', as: 'usuarios' });
+
+// Grupo <-> Permissao (Many-to-Many)
+Grupo.belongsToMany(Permissao, { through: 'GrupoPermissao', as: 'permissoes' });
+Permissao.belongsToMany(Grupo, { through: 'GrupoPermissao', as: 'grupos' });
+
 module.exports = {
   sequelize,
   User,
@@ -85,4 +95,6 @@ module.exports = {
   CarrinhoItem,
   Cozinha,
   Endereco,
+  Grupo,
+  Permissao,
 };

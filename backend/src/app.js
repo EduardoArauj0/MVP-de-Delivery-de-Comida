@@ -31,10 +31,6 @@ app.use('/upload', uploadRoutes);
 app.use('/cozinhas', cozinhaRoutes);
 app.use('/enderecos', enderecoRoutes);
 
-// Swagger Docs
-const swaggerSpec = require('./config/swagger');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 
 module.exports = app;

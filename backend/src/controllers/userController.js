@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const { User, Grupo, Permissao } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -8,14 +8,18 @@ module.exports = {
   // Cadastro
   async criar(req, res) {
     try {
-      const { nome, email, senha, tipo } = req.body;
+      const { nome, email, senha } = req.body;
       const userExists = await User.findOne({ where: { email } });
       if (userExists) return res.status(400).json({ erro: 'Email já cadastrado' });
 
-      const tipoPermitido = tipo === 'admin' ? 'cliente' : tipo;
+      const user = await User.create({ nome, email, senha });
 
-      const user = await User.create({ nome, email, senha, tipo: tipoPermitido });
-      res.status(201).json({ id: user.id, nome: user.nome, email: user.email, tipo: user.tipo });
+      const clienteGroup = await Grupo.findOne({ where: { nome: 'Cliente' } });
+      if (clienteGroup) {
+        await user.addGrupo(clienteGroup);
+      }
+
+      res.status(201).json({ id: user.id, nome: user.nome, email: user.email });
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao criar usuário', detalhes: error.message });
     }
@@ -25,14 +29,32 @@ module.exports = {
   async login(req, res) {
     try {
       const { email, senha } = req.body;
-      const user = await User.findOne({ where: { email } });
+      const user = await User.findOne({
+        where: { email },
+        include: {
+          model: Grupo,
+          as: 'grupos',
+          include: { model: Permissao, as: 'permissoes' },
+        },
+      });
+
       if (!user) return res.status(401).json({ erro: 'Usuário ou senha inválidos' });
 
       const valid = await bcrypt.compare(senha, user.senha);
       if (!valid) return res.status(401).json({ erro: 'Usuário ou senha inválidos' });
 
-      const token = jwt.sign({ id: user.id, tipo: user.tipo }, JWT_SECRET, { expiresIn: '8h' });
-      res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, tipo: user.tipo } });
+      const permissoes = user.grupos.flatMap(g => g.permissoes.map(p => p.nome));
+      const uniquePermissoes = [...new Set(permissoes)];
+
+      const payload = {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        permissoes: uniquePermissoes,
+      };
+
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+      res.json({ token, user: payload });
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao fazer login' });
     }
@@ -41,7 +63,10 @@ module.exports = {
   // Listar usuários
   async listar(req, res) {
     try {
-      const users = await User.findAll({ attributes: ['id', 'nome', 'email', 'tipo'] });
+      const users = await User.findAll({ 
+        attributes: ['id', 'nome', 'email'],
+        include: { model: Grupo, as: 'grupos', attributes: ['nome'], through: { attributes: [] } }
+      });
       res.json(users);
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao listar usuários' });
@@ -51,7 +76,10 @@ module.exports = {
   // Buscar por ID
   async buscarPorId(req, res) {
     try {
-      const user = await User.findByPk(req.params.id, { attributes: ['id', 'nome', 'email', 'tipo'] });
+      const user = await User.findByPk(req.params.id, { 
+        attributes: ['id', 'nome', 'email'],
+        include: { model: Grupo, as: 'grupos', attributes: ['nome'], through: { attributes: [] } }
+      });
       if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
       res.json(user);
     } catch (error) {
@@ -65,23 +93,19 @@ module.exports = {
       const user = await User.findByPk(req.params.id);
       if (!user) return res.status(404).json({ erro: 'Usuário não encontrado.' });
 
-      if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
+      const canManageSystem = req.user.permissoes.includes('MANAGE_SYSTEM');
+      if (req.user.id !== Number(req.params.id) && !canManageSystem) {
         return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
       }
 
-     
-      const { nome, email, senha, tipo } = req.body;
+      const { nome, email, senha } = req.body;
 
       if (nome) user.nome = nome;
       if (email) user.email = email;
       if (senha) user.senha = senha;
-      
-      if (tipo && req.user.tipo === 'admin') {
-        user.tipo = tipo;
-      }
 
       await user.save();
-      res.json({ id: user.id, nome: user.nome, email: user.email, tipo: user.tipo });
+      res.json({ id: user.id, nome: user.nome, email: user.email });
     } catch (error) {
       res.status(500).json({ erro: 'Erro ao atualizar usuário', detalhes: error.message });
     }
@@ -93,10 +117,11 @@ module.exports = {
       const user = await User.findByPk(req.params.id);
       if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
-      if (req.user.id !== Number(req.params.id) && req.user.tipo !== 'admin') {
+      const canManageSystem = req.user.permissoes.includes('MANAGE_SYSTEM');
+      if (req.user.id !== Number(req.params.id) && !canManageSystem) {
         return res.status(403).json({ erro: 'Você não tem permissão para remover outro usuário' });
       }
-      
+
       await user.destroy();
       res.json({ mensagem: 'Usuário removido com sucesso' });
     } catch (error) {
