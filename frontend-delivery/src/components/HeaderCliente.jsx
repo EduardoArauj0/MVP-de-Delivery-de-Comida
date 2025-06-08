@@ -24,6 +24,9 @@ export default function HeaderCliente() {
           <li className="nav-item">
             <Link className="nav-link" to="/meus-pedidos">Meus Pedidos</Link>
           </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/perfil">Meu Perfil</Link>
+          </li>
         </ul>
         <button className="btn btn-outline-light" onClick={handleLogout}>Sair</button>
       </div>

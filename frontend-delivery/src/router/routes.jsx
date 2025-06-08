@@ -10,6 +10,7 @@ import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
 import ProdutoAdminPage from '../pages/admin/ProdutoAdminPage';
 import { useAuth } from '../hooks/useAuth';
+import ProfilePage from '../pages/ProfilePage';
 
 const PrivateRoute = ({ children, tipo }) => {
   const { user, loadingAuth } = useAuth();
@@ -37,6 +38,14 @@ export const routes = createBrowserRouter([
   { path: '/', element: <HomePage /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
+  {
+    path: '/perfil',
+    element: (
+      <PrivateRoute tipo="cliente">
+        <ProfilePage />
+      </PrivateRoute>
+    )
+  },
   {
     path: '/dashboard-empresa',
     element: (

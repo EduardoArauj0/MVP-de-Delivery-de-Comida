@@ -10,6 +10,7 @@ const Avaliacao = require('./Avaliacao');
 const Carrinho = require('./Carrinho');
 const CarrinhoItem = require('./CarrinhoItem');
 const Cozinha = require('./Cozinha');
+const Endereco = require('./Endereco');
 
 // Restaurante - Empresa (User)
 User.hasMany(Restaurante, { foreignKey: 'empresaId' });
@@ -67,6 +68,10 @@ Carrinho.hasMany(CarrinhoItem, { as: 'itensNoCarrinho', foreignKey: 'CarrinhoId'
 CarrinhoItem.belongsTo(Produto, { as: 'produtoCarrinho', foreignKey: 'ProdutoId' });
 Produto.hasMany(CarrinhoItem, { as: 'carrinhosComProduto', foreignKey: 'ProdutoId' });
 
+// User - Endereco
+User.hasMany(Endereco, { as: 'enderecos', foreignKey: 'UserId' });
+Endereco.belongsTo(User, { foreignKey: 'UserId' });
+
 module.exports = {
   sequelize,
   User,
@@ -79,4 +84,5 @@ module.exports = {
   Carrinho,
   CarrinhoItem,
   Cozinha,
+  Endereco,
 };

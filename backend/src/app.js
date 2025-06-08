@@ -18,6 +18,7 @@ const modoPagamentoRoutes = require('./routes/modoPagamentoRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const cozinhaRoutes = require('./routes/cozinhaRoutes');
+const enderecoRoutes = require('./routes/enderecoRoutes');
 
 app.use('/restaurantes', restauranteRoutes);
 app.use('/produtos', produtoRoutes);
@@ -28,6 +29,7 @@ app.use('/modospagamento', modoPagamentoRoutes);
 app.use('/users', userRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/cozinhas', cozinhaRoutes);
+app.use('/enderecos', enderecoRoutes);
 
 // Swagger Docs
 const swaggerSpec = require('./config/swagger');
