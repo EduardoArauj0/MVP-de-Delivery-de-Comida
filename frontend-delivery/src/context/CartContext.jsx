@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const fetchBackendCart = useCallback(async () => {
-    if (user?.id && user.tipo === 'cliente' && token) {
+    if (user?.id && user.permissoes?.includes('PLACE_ORDER') && token) {
       setLoadingCart(true);
       setCartError(null);
       try {
@@ -71,7 +71,7 @@ export const CartProvider = ({ children }) => {
           CarrinhoItems: backendCart.itensNoCarrinho?.map(item => ({
             id: item.id,
             quantidade: item.quantidade,
-            Produto: item.produtoCarrinho 
+            Produto: item.produtoCarrinho
           })) || []
         };
         
@@ -119,7 +119,7 @@ export const CartProvider = ({ children }) => {
   }, [user, token, isSyncing, loadLocalCart, fetchBackendCart]);
 
   useEffect(() => {
-    if (user?.id && user.tipo === 'cliente') {
+    if (user?.id && user.permissoes?.includes('PLACE_ORDER')) {
       syncLocalCartWithBackend();
     } else {
       setCart(loadLocalCart());
@@ -142,7 +142,7 @@ export const CartProvider = ({ children }) => {
     setCartError(null);
     
     try {
-      if (user?.id && user.tipo === 'cliente') {
+      if (user?.id && user.permissoes?.includes('PLACE_ORDER')) {
         const itemData = { produtoId: produto.id, quantidade };
         await carrinhoService.adicionarItem(user.id, itemData);
         await fetchBackendCart();
@@ -190,7 +190,7 @@ export const CartProvider = ({ children }) => {
   const updateItemQuantity = async (produtoId, quantidade) => {
     setLoadingCart(true);
     setCartError(null);
-    if (user?.id && user.tipo === 'cliente') {
+    if (user?.id && user.permissoes?.includes('PLACE_ORDER')) {
       const backendItem = cart?.CarrinhoItems?.find(item => item.Produto.id === produtoId);
       if (!backendItem) {
         setCartError('Item não encontrado no carrinho do backend.');
@@ -235,7 +235,7 @@ export const CartProvider = ({ children }) => {
   const removeItemFromCart = async (itemId, produtoId) => {
     setLoadingCart(true);
     setCartError(null);
-    if (user?.id && user.tipo === 'cliente') {
+    if (user?.id && user.permissoes?.includes('PLACE_ORDER')) {
       if (!itemId && cart && cart.CarrinhoItems) { 
         const found = cart.CarrinhoItems.find(item => item.Produto.id === produtoId);
         itemId = found?.id;
@@ -274,7 +274,7 @@ export const CartProvider = ({ children }) => {
   const clearClientCart = async () => {
     setLoadingCart(true);
     setCartError(null);
-    if (user?.id && user.tipo === 'cliente') {
+    if (user?.id && user.permissoes?.includes('PLACE_ORDER')) {
       try {
         await carrinhoService.limparCarrinho(user.id);
         await fetchBackendCart(); 

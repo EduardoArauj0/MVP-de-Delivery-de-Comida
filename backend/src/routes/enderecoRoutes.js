@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/enderecoController');
 const autenticar = require('../middlewares/authMiddleware');
-const authorizeRole = require('../middlewares/authorizeRole');
+const authorizePermission = require('../middlewares/authorizePermission');
 
-router.use(autenticar, authorizeRole('cliente'));
+router.use(autenticar, authorizePermission('PLACE_ORDER'));
 
 router.post('/', controller.criar);
 router.get('/meus', controller.listarPorUsuario);

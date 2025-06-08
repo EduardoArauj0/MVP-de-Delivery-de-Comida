@@ -26,6 +26,8 @@ export default function RestaurantePage() {
   const isEmpresa = useHasPermission(['MANAGE_RESTAURANT']);
   const isAdmin = useHasPermission(['MANAGE_SYSTEM']);
 
+  const canAddToCart = !isAdmin && !isEmpresa;
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -80,7 +82,7 @@ export default function RestaurantePage() {
     if (isAdmin) return <HeaderAdmin />;
     if (isEmpresa) return <HeaderEmpresa />;
     if (isCliente) return <HeaderCliente />;
-    return <HeaderPublico busca="" setBusca={() => {}} />;
+    return <HeaderPublico busca="" setBusca={() => {}} />; // Fallback
   };
 
   if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
@@ -115,7 +117,7 @@ export default function RestaurantePage() {
                   <h5 className="card-title">{prod.nome}</h5>
                   <p className="card-text">{prod.descricao}</p>
                   <p className="card-text fw-bold">R$ {parseFloat(prod.preco).toFixed(2)}</p>
-                  {isCliente && (
+                  {canAddToCart && (
                     <button className="btn btn-success w-100 mt-auto" onClick={() => handleAdicionarAoCarrinho(prod)}>
                         Adicionar ao carrinho
                     </button>
