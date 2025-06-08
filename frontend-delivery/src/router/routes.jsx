@@ -8,18 +8,26 @@ import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
 import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
+import ProdutoAdminPage from '../pages/admin/ProdutoAdminPage';
 import { useAuth } from '../hooks/useAuth';
 
 const PrivateRoute = ({ children, tipo }) => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
-  if (tipo && user.tipo !== tipo) {
+  const { user, loadingAuth } = useAuth();
+
+  if (loadingAuth) {
+    return <div className="container vh-100 d-flex justify-content-center align-items-center"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">Carregando...</span></div></div>;
+  }
+
+  if (!user) {
+    return <Navigate to={`/login?redirect=${window.location.pathname}`} />;
+  }
+  
+  const tiposPermitidos = tipo.split(',');
+  if (tipo && !tiposPermitidos.includes(user.tipo)) {
     let redirectTo = '/';
     if (user.tipo === 'empresa') redirectTo = '/dashboard-empresa';
     if (user.tipo === 'admin') redirectTo = '/dashboard-admin';
-    if (window.location.pathname === redirectTo) {
-        return children;
-    }
+    
     return <Navigate to={redirectTo} />;
   }
   return children;
@@ -64,8 +72,24 @@ export const routes = createBrowserRouter([
   {
     path: '/pedidos-recebidos',
     element: (
-      <PrivateRoute tipo="empresa">
+      <PrivateRoute tipo="empresa,admin">
         <PedidosRecebidosPage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/produto/novo',
+    element: (
+      <PrivateRoute tipo="empresa">
+        <ProdutoAdminPage />
+      </PrivateRoute>
+    )
+  },
+  {
+    path: '/produto/:produtoId/editar',
+    element: (
+      <PrivateRoute tipo="empresa">
+        <ProdutoAdminPage />
       </PrivateRoute>
     )
   },
