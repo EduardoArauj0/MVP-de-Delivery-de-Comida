@@ -1,48 +1,68 @@
 import { Link } from 'react-router-dom';
+import './style/RestauranteCard.css';
 
 export default function RestauranteCard({ restaurante }) {
+    console.log('URL da API lida pelo Vite:', import.meta.env.VITE_API_URL);
   if (!restaurante) {
     return null;
   }
 
-  const tipoCozinhaNome = restaurante.Cozinha?.nome || restaurante.tipoCozinha?.nome || 'Não especificado';
+  const backendUrl = import.meta.env.VITE_API_URL;
+
+  let imagemUrl;
+
+  if (restaurante.imagemUrl) {
+    if (restaurante.imagemUrl.startsWith('/')) {
+      imagemUrl = `${backendUrl}${restaurante.imagemUrl}`;
+    } else {
+      imagemUrl = restaurante.imagemUrl;
+    }
+  } else {
+    const tipoCozinhaNome = restaurante.Cozinha?.nome || 'restaurant';
+    imagemUrl = `https://source.unsplash.com/150x150/?restaurant-logo,${tipoCozinhaNome.toLowerCase()}&random=${restaurante.id}`;
+  }
+
+  const tipoCozinhaNome = restaurante.Cozinha?.nome || restaurante.tipoCozinha?.nome || 'Cozinha';
   const taxaFreteFormatada = restaurante.taxaFrete !== undefined && restaurante.taxaFrete !== null
     ? parseFloat(restaurante.taxaFrete) === 0 ? 'Grátis' : `R$ ${parseFloat(restaurante.taxaFrete).toFixed(2)}`
     : 'Consultar';
 
   return (
-    <Link to={`/restaurante/${restaurante.id}`} className="text-decoration-none text-dark">
-      <div className="card h-100 shadow-sm restaurant-card">
+    <Link to={`/restaurante/${restaurante.id}`} className="restaurant-card-link">
+      <div className="restaurant-card-horizontal">
+        
+        {/* Logo à Esquerda */}
         <img
-          src={restaurante.imagemUrl || `https://source.unsplash.com/400x300/?food,${tipoCozinhaNome.toLowerCase()}&random=${restaurante.id}`}
-          className="card-img-top"
-          alt={`Foto do restaurante ${restaurante.nome}`}
-          style={{ height: '180px', objectFit: 'cover' }}
+          src={imagemUrl}
+          className="restaurant-logo"
+          alt={`Logo do restaurante ${restaurante.nome}`}
         />
-        <div className="card-body d-flex flex-column">
-          <h5 className="card-title text-truncate mb-1">{restaurante.nome}</h5>
-          <small className="text-muted mb-2">
-            {<span className="badge bg-warning text-dark me-2">⭐ {restaurante.avaliacaoMedia || '-'}</span>}
-            {tipoCozinhaNome}
-          </small>
+        
+        {/* Bloco de Informações à Direita */}
+        <div className="restaurant-info">
+          <span className="restaurant-name">{restaurante.nome}</span>
           
-          <p className="card-text small text-muted mb-2 text-truncate" title={restaurante.endereco}>
-            📍 {restaurante.endereco || 'Endereço não informado'}
-          </p>
+          <div className="restaurant-details">
+            <span className="rating">
+              ★ {restaurante.avaliacaoMedia > 0 ? restaurante.avaliacaoMedia.toFixed(1) : 'Sem avaliação'}
+            </span>
+            <span>•</span>
+            <span>{tipoCozinhaNome}</span>
+          </div>
 
-          <div className="mt-auto">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className={parseFloat(restaurante.taxaFrete) === 0 ? 'text-success fw-bold' : 'text-muted'}>
-                {taxaFreteFormatada}
-              </span>
-            </div>
-            
+          <div className="restaurant-meta">
+            <span className={parseFloat(restaurante.taxaFrete) === 0 ? 'free-delivery' : 'text-muted'}>
+              {taxaFreteFormatada}
+            </span>
             {restaurante.aberto !== undefined && (
-                 restaurante.aberto ? (
-                    <span className="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill px-2 py-1 float-end">Aberto</span>
-                  ) : (
-                    <span className="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill px-2 py-1 float-end">Fechado</span>
-                  )
+              <>
+                <span>•</span>
+                {restaurante.aberto ? (
+                  <span className="text-success">Aberto</span>
+                ) : (
+                  <span className="text-danger">Fechado</span>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -1,0 +1,81 @@
+.restaurant-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: all 0.25s ease-in-out;
+  border-radius: 12px;
+}
+
+/* EFEITO DE HOVER (ANIMAÇÃO) */
+.restaurant-card-link:hover {
+  transform: translateY(-5px); /* Efeito de "avançar" */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.restaurant-card-horizontal {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #fff; 
+  border: 1px solid transparent; 
+  transition: all 0.25s ease-in-out;
+}
+
+.restaurant-card-link:hover .restaurant-card-horizontal {
+  border-color: #dee2e6; 
+  background-color: #fff; 
+}
+
+.restaurant-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 16px;
+  flex-shrink: 0;
+  border: 1px solid #f0f0f0;
+}
+
+.restaurant-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.restaurant-name {
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.restaurant-details {
+  font-size: 0.85rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.restaurant-details .rating {
+  color: #ffc107;
+  font-weight: 500;
+}
+
+.restaurant-meta {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.free-delivery {
+  color: #198754;
+  font-weight: 500;
+}

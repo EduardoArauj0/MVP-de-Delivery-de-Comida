@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import cozinhaService from '../services/cozinhaService';
+import './style/FiltroLojas.css';
 
 export default function FiltroLojas({
   activeFilters,
@@ -26,7 +27,7 @@ export default function FiltroLojas({
     fetchCozinhas();
   }, []);
 
-  const handleCheckboxChange = (filterName) => {
+  const handleToggleFilter = (filterName) => {
     onFilterChange({ ...activeFilters, [filterName]: !activeFilters[filterName] });
   };
 
@@ -48,87 +49,78 @@ export default function FiltroLojas({
   };
 
   return (
-    <div className="mb-4 p-3 bg-light rounded shadow-sm">
-      <div className="row g-2 align-items-center">
-        {/* Filtro por Tipo de Cozinha */}
-        <div className="col-md-3">
-          <label htmlFor="filtroCozinha" className="form-label fw-normal small mb-1">Tipo de Cozinha</label>
-          <select
-            id="filtroCozinha"
-            className="form-select form-select-sm"
-            value={activeFilters.cozinhaId || ''}
-            onChange={handleCozinhaChange}
-            disabled={loadingCozinhas}
-          >
-            <option value="">Todas</option>
-            {tiposCozinha.map((cozinha) => (
-              <option key={cozinha.id} value={cozinha.id}>
-                {cozinha.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="d-flex flex-wrap align-items-center gap-3">
+      
+      {/* Filtro de Cozinha */}
+      <div className="flex-grow-1" style={{minWidth: '200px'}}>
+        <select
+          id="filtroCozinha"
+          className="form-select form-select-sm filter-select"
+          value={activeFilters.cozinhaId || ''}
+          onChange={handleCozinhaChange}
+          disabled={loadingCozinhas}
+        >
+          <option value="">Todas as cozinhas</option>
+          {tiposCozinha.map((cozinha) => (
+            <option key={cozinha.id} value={cozinha.id}>
+              {cozinha.nome}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {/* Filtros Booleanos */}
-        <div className="col-md-4 d-flex align-items-end">
-          <div className="form-check form-check-inline">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="filtroAberto"
-              checked={activeFilters.aberto || false}
-              onChange={() => handleCheckboxChange('aberto')}
-            />
-            <label className="form-check-label small" htmlFor="filtroAberto">
-              Abertos Agora
-            </label>
-          </div>
-          <div className="form-check form-check-inline">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="filtroEntregaGratis"
-              checked={activeFilters.entregaGratis || false}
-              onChange={() => handleCheckboxChange('entregaGratis')}
-            />
-            <label className="form-check-label small" htmlFor="filtroEntregaGratis">
-              Entrega Grátis
-            </label>
-          </div>
-        </div>
+      {/* Botões de Filtro */}
+      <div className="d-flex align-items-center gap-2">
+        <button 
+          type="button"
+          onClick={() => handleToggleFilter('aberto')}
+          className={`btn filter-pill ${activeFilters.aberto ? 'btn-danger' : 'btn-outline-secondary'}`}
+        >
+          Abertos
+        </button>
+        <button
+          type="button"
+          onClick={() => handleToggleFilter('entregaGratis')}
+          className={`btn filter-pill ${activeFilters.entregaGratis ? 'btn-danger' : 'btn-outline-secondary'}`}
+        >
+          Entrega Grátis
+        </button>
+      </div>
 
-        {/* Ordenação */}
-        <div className="col-md-3">
-            <label htmlFor="ordenacao" className="form-label fw-normal small mb-1">Ordenar por</label>
-            <div className="input-group input-group-sm">
-                <select
-                    id="ordenacao"
-                    className="form-select form-select-sm"
-                    value={currentSort.orderBy}
-                    onChange={handleSortCriteriaChange}
-                >
-                    <option value="nome">Nome</option>
-                    <option value="taxaFrete">Taxa de Entrega</option>
-                    {<option value="avaliacao">Avaliação</option>}
-                </select>
-                <select
-                    className="form-select form-select-sm"
-                    value={currentSort.orderDirection}
-                    onChange={handleSortDirectionChange}
-                    aria-label="Direção da ordenação"
-                >
-                    <option value="ASC">ASC</option>
-                    <option value="DESC">DESC</option>
-                </select>
-            </div>
-        </div>
+      <div className="vr d-none d-lg-block mx-2"></div>
 
-
-        <div className="col-md-2 d-flex align-items-end">
-          <button className="btn btn-sm btn-outline-secondary w-100" onClick={limparFiltros}>
-            Limpar
-          </button>
-        </div>
+      {/* Ordenação */}
+      <div className="d-flex align-items-center gap-2">
+        <span className="small text-muted me-1">Ordenar por:</span>
+        <select
+            id="ordenacao"
+            className="form-select form-select-sm filter-select" 
+            value={currentSort.orderBy}
+            onChange={handleSortCriteriaChange}
+        >
+            <option value="nome">Nome</option>
+            <option value="taxaFrete">Taxa de Entrega</option>
+            <option value="avaliacao">Avaliação</option>
+        </select>
+        <select
+            className="form-select form-select-sm filter-select" 
+            value={currentSort.orderDirection}
+            onChange={handleSortDirectionChange}
+            aria-label="Direção da ordenação"
+        >
+            <option value="ASC">CRESC</option>
+            <option value="DESC">DESC</option>
+        </select>
+      </div>
+      
+      {/* Botão LimpaR */}
+      <div className="ms-auto">
+        <button 
+          onClick={limparFiltros} 
+          className="btn filter-pill btn-outline-secondary" /* ESTILO PADRONIZADO AQUI */
+        >
+          Limpar
+        </button>
       </div>
     </div>
   );
