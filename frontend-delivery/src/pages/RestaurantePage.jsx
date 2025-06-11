@@ -1,32 +1,80 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import HeaderCliente from '../components/HeaderCliente';
-import HeaderPublico from '../components/HeaderPublico';
-import HeaderAdmin from '../components/HeaderAdmin';
-import HeaderEmpresa from '../components/HeaderEmpresa';
 import restauranteService from '../services/restauranteService';
 import produtoService from '../services/produtoService';
 import avaliacaoService from '../services/avaliacaoService';
-import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
-import { useHasPermission } from '../hooks/useHasPermission';
+import HeaderPublico from '../components/HeaderPublico';
+import './style/RestaurantePage.css';
 
+// Card de Produto no Carrossel
+const ProdutoCard = ({ produto, onAddToCart, backendUrl }) => {
+  const imageUrl = produto.imagem?.startsWith('/') 
+    ? `${backendUrl}${produto.imagem}` 
+    : (produto.imagem);
+
+  return (
+    <div className="produto-card">
+      <img src={imageUrl} alt={produto.nome} />
+      <div className="produto-card-body">
+        <h5>{produto.nome}</h5>
+        <p>{produto.descricao}</p>
+      </div>
+      <div className="produto-card-footer">
+        <span className="price">R$ {parseFloat(produto.preco).toFixed(2)}</span>
+        <button className="btn btn-sm btn-danger" onClick={() => onAddToCart(produto)}>Adicionar</button>
+      </div>
+    </div>
+  );
+};
+
+// Carrossel de Produtos
+const ProdutoCarrossel = ({ title, produtos, onAddToCart, backendUrl }) => {
+  const carrosselRef = useRef(null);
+
+  const scroll = (scrollOffset) => {
+    if (carrosselRef.current) {
+      carrosselRef.current.scrollLeft += scrollOffset;
+    }
+  };
+
+  return (
+    <div className="produto-carrossel-section">
+      <div className="carrossel-header">
+        <h3>{title}</h3>
+        <div className="d-flex gap-2">
+          <button className="carrossel-arrow arrow-left" onClick={() => scroll(-300)} aria-label="Rolar para esquerda">
+            <i className="bi bi-chevron-left"></i>
+          </button>
+          <button className="carrossel-arrow arrow-right" onClick={() => scroll(300)} aria-label="Rolar para direita">
+            <i className="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+      <div className="carrossel-container" ref={carrosselRef}>
+        {produtos.map(prod => (
+          <ProdutoCard key={prod.id} produto={prod} onAddToCart={onAddToCart} backendUrl={backendUrl} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Componente Principal da Página
 export default function RestaurantePage() {
   const { id } = useParams();
-  const { user } = useAuth();
   const { addItemToCart } = useCart();
   const [restaurante, setRestaurante] = useState(null);
   const [produtos, setProdutos] = useState([]);
-  const [avaliacoes, setAvaliacoes] = useState([]);
-  const [mediaAvaliacoes, setMediaAvaliacoes] = useState(0);
-  const [feedback, setFeedback] = useState('');
-  const [feedbackError, setFeedbackError] = useState('');
+  const [avaliacoes, setAvaliacoes] = useState(null);
+  const [feedback, setFeedback] = useState({ message: '', type: '' });
+  const [showDetalhes, setShowDetalhes] = useState(false);
+  const [termoBusca, setTermoBusca] = useState('');
 
-  const isCliente = useHasPermission(['PLACE_ORDER']);
-  const isEmpresa = useHasPermission(['MANAGE_RESTAURANT']);
-  const isAdmin = useHasPermission(['MANAGE_SYSTEM']);
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-  const canAddToCart = !isAdmin && !isEmpresa;
+  const handleCloseDetalhes = () => setShowDetalhes(false);
+  const handleShowDetalhes = () => setShowDetalhes(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -38,121 +86,120 @@ export default function RestaurantePage() {
         setProdutos(resProd.data);
 
         const resAval = await avaliacaoService.listarPorRestaurante(id);
-        if (resAval.data) {
-          setAvaliacoes(resAval.data.avaliacoes);
-          setMediaAvaliacoes(resAval.data.mediaNotas);
-        }
-
+        setAvaliacoes(resAval.data);
       } catch (err) {
         console.error(err);
-        setFeedbackError('Erro ao carregar dados do restaurante');
       }
     }
     fetchData();
   }, [id]);
 
   async function handleAdicionarAoCarrinho(produto) {
-    setFeedback('');
-    setFeedbackError('');
-    
+    setFeedback({ message: '', type: '' });
     const sucesso = await addItemToCart(produto, 1);
-
     if (sucesso) {
-      setFeedback(`${produto.nome} adicionado ao carrinho!`);
+      setFeedback({ message: `${produto.nome} adicionado ao carrinho!`, type: 'success' });
     } else {
-      setFeedbackError(`Não foi possível adicionar ${produto.nome}. Verifique se já existem itens de outro restaurante no seu carrinho.`);
+      setFeedback({ message: `Não foi possível adicionar ${produto.nome}. Verifique seu carrinho.`, type: 'danger' });
     }
-
-    setTimeout(() => {
-        setFeedback('');
-        setFeedbackError('');
-    }, 3000);
+    setTimeout(() => setFeedback({ message: '', type: '' }), 3000);
   }
 
-  const renderStars = (nota) => {
-    let stars = '';
-    for (let i = 0; i < 5; i++) {
-      stars += i < nota ? '★' : '☆';
-    }
-    return <span className="text-warning">{stars}</span>;
-  }
+  const produtosFiltrados = produtos.filter(p => 
+    p.nome.toLowerCase().includes(termoBusca.toLowerCase())
+  );
 
-  const renderHeader = () => {
-    if (!user) return <HeaderPublico busca="" setBusca={() => {}} />;
-    if (isAdmin) return <HeaderAdmin />;
-    if (isEmpresa) return <HeaderEmpresa />;
-    if (isCliente) return <HeaderCliente />;
-    return <HeaderPublico busca="" setBusca={() => {}} />; // Fallback
-  };
+  const produtosAgrupados = produtosFiltrados.reduce((acc, produto) => {
+    const categoria = produto.categoria || 'Outros';
+    if (!acc[categoria]) {
+      acc[categoria] = [];
+    }
+    acc[categoria].push(produto);
+    return acc;
+  }, {});
 
   if (!restaurante) return <div className="text-center mt-5">Carregando...</div>;
 
+  const logoImageUrl = restaurante.imagemUrl?.startsWith('/') 
+    ? `${backendUrl}${restaurante.imagemUrl}` 
+    : restaurante.imagemUrl;
+
   return (
     <>
-      {renderHeader()}
-      <div className="container py-4">
-        <div className="mb-4">
-          <img
-            src={restaurante.imagemUrl || "https://source.unsplash.com/1200x300/?restaurant"}
-            alt="Capa do restaurante"
-            className="img-fluid rounded shadow-sm"
-            style={{ width: '100%', height: '300px', objectFit: 'cover' }}
-          />
-          <h2 className="mt-3">{restaurante.nome}</h2>
-          <p className="mb-1"><strong>Endereço:</strong> {restaurante.endereco}</p>
-          <p className="mb-1"><strong>Telefone:</strong> {restaurante.telefone}</p>
-          <p className="text-muted">Bem-vindo ao {restaurante.nome}, explore nosso cardápio e faça seu pedido com conforto e praticidade!</p>
-        </div>
-
-        {feedback && <div className="alert alert-success">{feedback}</div>}
-        {feedbackError && <div className="alert alert-danger">{feedbackError}</div>}
-
-        <h4 className="mb-3">Cardápio</h4>
-        <div className="row">
-          {produtos.map(prod => (
-            <div className="col-md-4 mb-4" key={prod.id}>
-              <div className="card h-100">
-                <img src={prod.imagem || `https://source.unsplash.com/400x300/?food,${prod.categoria.toLowerCase()}`} className="card-img-top" alt={prod.nome} style={{ height: '200px', objectFit: 'cover' }} />
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title">{prod.nome}</h5>
-                  <p className="card-text">{prod.descricao}</p>
-                  <p className="card-text fw-bold">R$ {parseFloat(prod.preco).toFixed(2)}</p>
-                  {canAddToCart && (
-                    <button className="btn btn-success w-100 mt-auto" onClick={() => handleAdicionarAoCarrinho(prod)}>
-                        Adicionar ao carrinho
-                    </button>
-                  )}
-                </div>
-              </div>
+      <HeaderPublico />
+      <div className="container py-5">
+        
+        <header className="restaurante-header">
+          <img src={logoImageUrl} alt={`Logo do ${restaurante.nome}`} className="restaurante-header-logo" />
+          <div className="restaurante-header-info">
+            <h1>{restaurante.nome}</h1>
+            <div className="rating">
+              <span className="star">★</span> {avaliacoes?.mediaNotas > 0 ? avaliacoes.mediaNotas.toFixed(1) : 'Sem avaliações'}
             </div>
-          ))}
-        </div>
+          </div>
+          <button className="btn btn-outline-secondary ms-auto" onClick={handleShowDetalhes}>Ver mais</button>
+        </header>
 
-        <hr className="my-5" />
+        <section className="restaurante-actions">
+          <div className="input-group w-50">
+            <span className="input-group-text bg-light border-end-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+            </span>
+            <input 
+              type="text" 
+              className="form-control border-start-0" 
+              placeholder="Buscar item no cardápio"
+              value={termoBusca}
+              onChange={e => setTermoBusca(e.target.value)}
+            />
+          </div>
+          <div className="delivery-info">
+            <strong>Entrega</strong>
+            {parseFloat(restaurante.taxaFrete) === 0 ? (
+              <span className="text-success fw-bold">Grátis</span>
+            ) : (
+              <span>Hoje • R$ {parseFloat(restaurante.taxaFrete).toFixed(2)}</span>
+            )}
+          </div>
+        </section>
 
-        <div>
-          <h4 className="mb-3">
-            Avaliações ({avaliacoes.length}) - Média: {mediaAvaliacoes.toFixed(1)} <span className='text-warning'>★</span>
-          </h4>
-          {avaliacoes.length > 0 ? (
-            avaliacoes.map(aval => (
-              <div className="card mb-3" key={aval.id}>
-                <div className="card-body">
-                  <div className='d-flex justify-content-between'>
-                    <strong>{aval.avaliador.nome}</strong>
-                    <span>{renderStars(aval.nota)}</span>
-                  </div>
-                  <p className="card-text mt-2 mb-0">{aval.comentario}</p>
-                  <small className="text-muted">Avaliado em: {new Date(aval.createdAt).toLocaleDateString('pt-BR')}</small>
-                </div>
-              </div>
+        {feedback.message && <div className={`alert alert-${feedback.type}`}>{feedback.message}</div>}
+
+        <section>
+          {Object.keys(produtosAgrupados).length > 0 ? (
+            Object.keys(produtosAgrupados).map(categoria => (
+              <ProdutoCarrossel 
+                key={categoria}
+                title={categoria} 
+                produtos={produtosAgrupados[categoria]}
+                onAddToCart={handleAdicionarAoCarrinho}
+                backendUrl={backendUrl}
+              />
             ))
           ) : (
-            <p>Este restaurante ainda não possui avaliações.</p>
+            <div className="text-center text-muted mt-5">
+              <p>Nenhum item encontrado com o termo "{termoBusca}".</p>
+            </div>
           )}
-        </div>
+        </section>
 
       </div>
+
+      <div className={`offcanvas offcanvas-end ${showDetalhes ? 'show' : ''}`} tabIndex="-1" style={{ visibility: showDetalhes ? 'visible' : 'hidden' }}>
+        <div className="offcanvas-header">
+          <h5 className="offcanvas-title">Sobre o Restaurante</h5>
+          <button type="button" className="btn-close" onClick={handleCloseDetalhes}></button>
+        </div>
+        <div className="offcanvas-body">
+          <h4>{restaurante.nome}</h4>
+          <p><strong>CNPJ:</strong> {restaurante.cnpj}</p>
+          <p><strong>Telefone:</strong> {restaurante.telefone}</p>
+          <p><strong>Endereço:</strong> {restaurante.endereco}</p>
+          <hr />
+          <p><em>{restaurante.nome} é um estabelecimento parceiro do DeliveryApp, pronto para atender o seu pedido!</em></p>
+        </div>
+      </div>
+      {showDetalhes && <div className="offcanvas-backdrop fade show" onClick={handleCloseDetalhes}></div>}
     </>
   );
 }
