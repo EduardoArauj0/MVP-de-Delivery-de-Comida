@@ -1,0 +1,88 @@
+.summary-card {
+  position: -webkit-sticky; /* Para compatibilidade com Safari */
+  position: sticky;
+  top: 100px; 
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+/* Linha de cada item do carrinho */
+.cart-item-row {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cart-item-row:last-child {
+  border-bottom: none;
+}
+
+.cart-item-img img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.cart-item-details {
+  flex-grow: 1;
+  margin: 0 1rem;
+}
+
+.cart-item-details h5 {
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.cart-item-details .text-muted {
+  font-size: 0.9rem;
+}
+
+/* Estilo do seletor de quantidade */
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 50rem;
+}
+
+.quantity-stepper .btn {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  font-size: 1.2rem;
+  border: none;
+}
+
+.quantity-stepper .form-control {
+  width: 40px;
+  text-align: center;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+/* Remove as setas padrão do input number */
+.quantity-stepper input[type=number]::-webkit-inner-spin-button, 
+.quantity-stepper input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+.quantity-stepper input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.cart-item-actions .btn-remove {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+.cart-item-actions .btn-remove:hover {
+    color: var(--bs-danger);
+}
