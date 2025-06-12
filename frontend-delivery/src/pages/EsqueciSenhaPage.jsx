@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './style/LoginPage.css';
+import './style/LoginPage.css'; // Reutilizando o mesmo estilo
 
 export default function EsqueciSenhaPage() {
   const [email, setEmail] = useState('');
@@ -13,17 +13,17 @@ export default function EsqueciSenhaPage() {
 
     setIsSubmitting(true);
     console.log(`Solicitação de reset de senha para o email: ${email}`);
-
+    
     setTimeout(() => {
       setIsSubmitting(false);
-      setIsSubmitted(true); 
+      setIsSubmitted(true);
     }, 1500);
   };
 
   const renderForm = () => (
     <>
       <h2>Esqueceu sua senha?</h2>
-      <p className="subtitle">Sem problemas! Insira seu email abaixo para receber um link de redefinição.</p>
+      <p className="subtitle">Insira seu email para receber um link de redefinição.</p>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -65,11 +65,12 @@ export default function EsqueciSenhaPage() {
 
   return (
     <div className="login-container">
+      <div className="login-image-section"></div>
+
       <section className="login-form-section">
         <div className="login-form-wrapper">
           <div className="logo">DeliveryApp</div>
           
-          {/* Renderiza o formulário ou a tela de sucesso com base no estado */}
           {isSubmitted ? renderSuccess() : renderForm()}
         
         </div>
