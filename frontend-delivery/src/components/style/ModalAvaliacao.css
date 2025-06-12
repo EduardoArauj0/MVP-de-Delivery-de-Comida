@@ -1,0 +1,22 @@
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.rating-stars .star {
+  font-size: 2.5rem;
+  cursor: pointer;
+  color: #e4e5e9;
+  transition: color 0.2s ease-in-out, transform 0.2s ease;
+}
+
+/* Estilo da estrela quando está ativa */
+.rating-stars .star.on {
+  color: #ffc107; 
+}
+
+.rating-stars .star:hover {
+    transform: scale(1.2);
+}

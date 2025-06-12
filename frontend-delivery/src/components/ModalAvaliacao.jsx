@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import avaliacaoService from '../services/avaliacaoService';
+import './style/ModalAvaliacao.css';
 
 export default function ModalAvaliacao({ show, handleClose, pedidoId, onAvaliacaoSuccess }) {
-  const [nota, setNota] = useState(5);
+  const [nota, setNota] = useState(0);
+  const [hover, setHover] = useState(0); 
   const [comentario, setComentario] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,6 +13,10 @@ export default function ModalAvaliacao({ show, handleClose, pedidoId, onAvaliaca
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (nota === 0) {
+      setErro('Por favor, selecione uma nota de 1 a 5 estrelas.');
+      return;
+    }
     setLoading(true);
     setErro('');
     try {
@@ -23,7 +29,7 @@ export default function ModalAvaliacao({ show, handleClose, pedidoId, onAvaliaca
       handleClose();
     } catch (err) {
       console.error(err);
-      setErro(err.response?.data?.erro || 'Erro ao enviar avaliação. Você já pode ter avaliado este pedido.');
+      setErro(err.response?.data?.erro || 'Erro ao enviar avaliação.');
     } finally {
       setLoading(false);
     }
@@ -34,32 +40,35 @@ export default function ModalAvaliacao({ show, handleClose, pedidoId, onAvaliaca
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Avaliar Pedido #{pedidoId}</h5>
+            <h5 className="modal-title">Avaliar Pedido</h5>
             <button type="button" className="btn-close" onClick={handleClose} disabled={loading}></button>
           </div>
           <form onSubmit={handleSubmit}>
             <div className="modal-body">
               {erro && <div className="alert alert-danger">{erro}</div>}
 
-              <div className="mb-3 text-center">
+              <div className="text-center">
                 <label className="form-label d-block">Sua Nota</label>
-                <div
-                  className="d-flex justify-content-center fs-2"
-                  style={{ WebkitTextStroke: '1px black' }} // Corrigido para sintaxe JSX correta
-                >
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      onClick={() => !loading && setNota(star)}
-                      style={{
-                        cursor: loading ? 'default' : 'pointer',
-                        color: star <= nota ? '#ffc107' : '#e4e5e9',
-                      }}
-                      title={`${star} estrela(s)`}
-                    >
-                      ★
-                    </span>
-                  ))}
+                <div className="rating-stars">
+                  {[...Array(5)].map((star, index) => {
+                    const ratingValue = index + 1;
+                    return (
+                      <label key={index}>
+                        <input
+                          type="radio"
+                          name="rating"
+                          value={ratingValue}
+                          onClick={() => setNota(ratingValue)}
+                          style={{ display: 'none' }} 
+                        />
+                        <i
+                          className={`bi bi-star-fill star ${ratingValue <= (hover || nota) ? 'on' : 'off'}`}
+                          onMouseEnter={() => setHover(ratingValue)}
+                          onMouseLeave={() => setHover(0)}
+                        ></i>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -78,11 +87,11 @@ export default function ModalAvaliacao({ show, handleClose, pedidoId, onAvaliaca
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer border-0">
               <button type="button" className="btn btn-secondary" onClick={handleClose} disabled={loading}>
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button type="submit" className="btn btn-danger" disabled={loading || nota === 0}>
                 {loading ? 'Enviando...' : 'Enviar Avaliação'}
               </button>
             </div>
