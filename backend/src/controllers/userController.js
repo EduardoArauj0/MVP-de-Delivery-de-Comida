@@ -115,6 +115,30 @@ module.exports = {
     }
   },
 
+  // Atualizar o grupo de um usuário
+  async atualizarGrupo(req, res) {
+    try {
+      const { grupoId } = req.body;
+      const user = await User.findByPk(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ erro: 'Usuário não encontrado.' });
+      }
+      
+      const grupo = await Grupo.findByPk(grupoId);
+      if (!grupo) {
+        return res.status(404).json({ erro: 'Grupo não encontrado.' });
+      }
+
+      await user.setGrupos([grupo]);
+
+      res.status(200).json({ mensagem: 'Grupo do usuário atualizado com sucesso.' });
+
+    } catch (error) {
+      res.status(500).json({ erro: 'Erro ao atualizar grupo do usuário', detalhes: error.message });
+    }
+  },
+
   // Remover um usuário
   async remover(req, res) {
     try {

@@ -19,6 +19,7 @@ const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const cozinhaRoutes = require('./routes/cozinhaRoutes');
 const enderecoRoutes = require('./routes/enderecoRoutes');
+const grupoRoutes = require('./routes/grupoRoutes'); 
 
 app.use('/restaurantes', restauranteRoutes);
 app.use('/produtos', produtoRoutes);
@@ -30,6 +31,7 @@ app.use('/users', userRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/cozinhas', cozinhaRoutes);
 app.use('/enderecos', enderecoRoutes);
+app.use('/grupos', grupoRoutes);
 
 app.get('/', (req, res) => res.send('API Delivery online 🚀'));
 

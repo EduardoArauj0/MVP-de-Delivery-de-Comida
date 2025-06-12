@@ -21,38 +21,25 @@ export default function CozinhaManager() {
     }
   };
 
-  useEffect(() => {
-    fetchCozinhas();
-  }, []);
+  useEffect(() => { fetchCozinhas(); }, []);
 
-  const handleEdit = (cozinha) => {
-    setEditingId(cozinha.id);
-    setEditingName(cozinha.nome);
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditingName('');
-  };
+  const handleEdit = (cozinha) => { setEditingId(cozinha.id); setEditingName(cozinha.nome); };
+  const handleCancel = () => { setEditingId(null); setEditingName(''); };
 
   const handleSave = async (id) => {
     try {
       await cozinhaService.atualizar(id, { nome: editingName });
       setEditingId(null);
       fetchCozinhas();
-    } catch (err) {
-      alert(err.response?.data?.erro || 'Erro ao salvar.');
-    }
+    } catch (err) { alert(err.response?.data?.erro || 'Erro ao salvar.'); }
   };
 
   const handleRemove = async (id) => {
-    if (window.confirm('Tem certeza que deseja remover este tipo de cozinha?')) {
+    if (window.confirm('Tem certeza?')) {
       try {
         await cozinhaService.remover(id);
         fetchCozinhas();
-      } catch (err) {
-        alert(err.response?.data?.erro || 'Erro ao remover.');
-      }
+      } catch (err) { alert(err.response?.data?.erro || 'Erro ao remover.'); }
     }
   };
 
@@ -63,9 +50,7 @@ export default function CozinhaManager() {
       await cozinhaService.criar({ nome: newName });
       setNewName('');
       fetchCozinhas();
-    } catch (err) {
-      alert(err.response?.data?.erro || 'Erro ao adicionar.');
-    }
+    } catch (err) { alert(err.response?.data?.erro || 'Erro ao adicionar.'); }
   };
 
   return (
@@ -81,19 +66,14 @@ export default function CozinhaManager() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
-          <button className="btn btn-success" type="submit">+ Adicionar</button>
+          <button className="btn btn-primary" type="submit">+ Adicionar</button>
         </form>
         {loading && <div className="text-center"><div className="spinner-border spinner-border-sm"></div></div>}
         <ul className="list-group">
           {cozinhas.map((cozinha) => (
             <li key={cozinha.id} className="list-group-item d-flex justify-content-between align-items-center">
               {editingId === cozinha.id ? (
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                />
+                <input type="text" className="form-control form-control-sm" value={editingName} onChange={(e) => setEditingName(e.target.value)} />
               ) : (
                 <span>{cozinha.nome}</span>
               )}

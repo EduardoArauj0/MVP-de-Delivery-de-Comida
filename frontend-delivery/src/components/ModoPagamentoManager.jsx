@@ -21,38 +21,25 @@ export default function ModoPagamentoManager() {
     }
   };
 
-  useEffect(() => {
-    fetchModos();
-  }, []);
+  useEffect(() => { fetchModos(); }, []);
 
-  const handleEdit = (modo) => {
-    setEditingId(modo.id);
-    setEditingName(modo.nome);
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditingName('');
-  };
+  const handleEdit = (modo) => { setEditingId(modo.id); setEditingName(modo.nome); };
+  const handleCancel = () => { setEditingId(null); setEditingName(''); };
 
   const handleSave = async (id) => {
     try {
       await modoPagamentoService.atualizar(id, { nome: editingName });
       setEditingId(null);
       fetchModos();
-    } catch (err) {
-      alert(err.response?.data?.erro || 'Erro ao salvar.');
-    }
+    } catch (err) { alert(err.response?.data?.erro || 'Erro ao salvar.'); }
   };
 
   const handleRemove = async (id) => {
-    if (window.confirm('Tem certeza que deseja remover este modo de pagamento?')) {
+    if (window.confirm('Tem certeza?')) {
       try {
         await modoPagamentoService.remover(id);
         fetchModos();
-      } catch (err) {
-        alert(err.response?.data?.erro || 'Erro ao remover.');
-      }
+      } catch (err) { alert(err.response?.data?.erro || 'Erro ao remover.'); }
     }
   };
 
@@ -63,9 +50,7 @@ export default function ModoPagamentoManager() {
       await modoPagamentoService.criar({ nome: newName });
       setNewName('');
       fetchModos();
-    } catch (err) {
-      alert(err.response?.data?.erro || 'Erro ao adicionar.');
-    }
+    } catch (err) { alert(err.response?.data?.erro || 'Erro ao adicionar.'); }
   };
 
   return (
@@ -81,19 +66,14 @@ export default function ModoPagamentoManager() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
-          <button className="btn btn-success" type="submit">+ Adicionar</button>
+          <button className="btn btn-primary" type="submit">+ Adicionar</button>
         </form>
         {loading && <div className="text-center"><div className="spinner-border spinner-border-sm"></div></div>}
         <ul className="list-group">
           {modos.map((modo) => (
             <li key={modo.id} className="list-group-item d-flex justify-content-between align-items-center">
               {editingId === modo.id ? (
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                />
+                <input type="text" className="form-control form-control-sm" value={editingName} onChange={(e) => setEditingName(e.target.value)} />
               ) : (
                 <span>{modo.nome}</span>
               )}

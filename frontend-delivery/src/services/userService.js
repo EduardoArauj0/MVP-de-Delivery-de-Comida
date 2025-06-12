@@ -20,6 +20,9 @@ const userService = {
   deleteUser: (id) => {
     return apiClient.delete(`/users/${id}`);
   },
+    updateUserGroup: (userId, grupoId) => {
+    return apiClient.put(`/users/${userId}/grupo`, { grupoId });
+  },
 };
 
 export default userService;

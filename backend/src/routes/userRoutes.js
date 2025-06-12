@@ -7,10 +7,13 @@ const authorizePermission = require('../middlewares/authorizePermission');
 router.post('/login', controller.login);
 router.post('/register', controller.criar);
 
-router.get('/', autenticar, authorizePermission('MANAGE_SYSTEM'), controller.listar);
+router.use(autenticar);
 
-router.get('/:id', autenticar, controller.buscarPorId);
-router.put('/:id', autenticar, controller.atualizar);
-router.delete('/:id', autenticar, controller.remover);
+router.get('/', authorizePermission('MANAGE_SYSTEM'), controller.listar);
+
+router.get('/:id', controller.buscarPorId);
+router.put('/:id', controller.atualizar);
+router.delete('/:id', authorizePermission('MANAGE_SYSTEM'), controller.remover);
+router.put('/:id/grupo', authorizePermission('MANAGE_SYSTEM'), controller.atualizarGrupo);
 
 module.exports = router;
