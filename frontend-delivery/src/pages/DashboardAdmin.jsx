@@ -4,8 +4,9 @@ import CozinhaManager from '../components/CozinhaManager';
 import ModoPagamentoManager from '../components/ModoPagamentoManager';
 import UserManager from '../components/UserManager';
 import RestauranteManager from '../components/RestauranteManager';
+import AvaliacaoManager from '../components/AvaliacaoManager'; // 1. IMPORTE O NOVO COMPONENTE
 import Modal from '../components/Modal';
-import UserEditForm from '../components/UserEditForm'; // IMPORTA O NOVO COMPONENTE
+import UserEditForm from '../components/UserEditForm';
 import RestauranteForm from '../components/RestauranteForm';
 
 export default function DashboardAdmin() {
@@ -17,27 +18,12 @@ export default function DashboardAdmin() {
   const [editingRestaurante, setEditingRestaurante] = useState(null);
   const [refreshUserList, setRefreshUserList] = useState(0);
 
-  const handleEditUser = (user) => {
-    setEditingUser(user);
-    setIsUserModalOpen(true);
-  };
-  const handleCloseUserModal = () => {
-    setIsUserModalOpen(false);
-    setEditingUser(null);
-  };
-   const handleSaveUser = () => {
-    handleCloseUserModal();
-    setRefreshUserList(prev => prev + 1);
-  };
+  const handleEditUser = (user) => { setEditingUser(user); setIsUserModalOpen(true); };
+  const handleCloseUserModal = () => { setIsUserModalOpen(false); setEditingUser(null); };
+  const handleSaveUser = () => { handleCloseUserModal(); setRefreshUserList(prev => prev + 1); };
 
-  const handleEditRestaurante = (restaurante) => {
-    setEditingRestaurante(restaurante);
-    setIsRestauranteModalOpen(true);
-  };
-  const handleCloseRestauranteModal = () => {
-    setIsRestauranteModalOpen(false);
-    setEditingRestaurante(null);
-  };
+  const handleEditRestaurante = (restaurante) => { setEditingRestaurante(restaurante); setIsRestauranteModalOpen(true); };
+  const handleCloseRestauranteModal = () => { setIsRestauranteModalOpen(false); setEditingRestaurante(null); };
 
   return (
     <>
@@ -57,6 +43,11 @@ export default function DashboardAdmin() {
             </button>
           </li>
           <li className="nav-item">
+            <button className={`nav-link ${activeTab === 'avaliacoes' ? 'active' : ''}`} onClick={() => setActiveTab('avaliacoes')}>
+              <i className="bi bi-star-half me-2"></i>Gerenciar Avaliações
+            </button>
+          </li>
+          <li className="nav-item">
             <button className={`nav-link ${activeTab === 'cozinhas' ? 'active' : ''}`} onClick={() => setActiveTab('cozinhas')}>
               <i className="bi bi-egg-fried me-2"></i>Gerenciar Cozinhas
             </button>
@@ -71,6 +62,7 @@ export default function DashboardAdmin() {
         <div className="tab-content pt-4">
           {activeTab === 'usuarios' && <UserManager onEditUser={handleEditUser} key={refreshUserList} />}
           {activeTab === 'restaurantes' && <RestauranteManager onEditRestaurante={handleEditRestaurante} />}
+          {activeTab === 'avaliacoes' && <AvaliacaoManager />}
           {activeTab === 'cozinhas' && <CozinhaManager />}
           {activeTab === 'pagamentos' && <ModoPagamentoManager />}
         </div>
