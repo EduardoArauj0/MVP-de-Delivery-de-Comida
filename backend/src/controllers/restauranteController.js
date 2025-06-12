@@ -2,6 +2,7 @@ const { Restaurante, Cozinha, Produto } = require('../models');
 const { Op } = require('sequelize');
 
 module.exports = {
+  // Criar restaurante
   async criar(req, res) {
     try {
       const { nome, cnpj, telefone, endereco, taxaFrete, ativo, aberto, imagemUrl, CozinhaId } = req.body;
@@ -23,11 +24,17 @@ module.exports = {
     }
   },
 
+  // Listar restaurantes
   async listar(req, res) {
     try {
-      const { cozinhaId, aberto, entregaGratis, ativoOnly, search, orderBy, orderDirection = 'ASC' } = req.query;
+      const { empresaId, cozinhaId, aberto, entregaGratis, ativoOnly, search, orderBy, orderDirection = 'ASC' } = req.query;
       const whereClause = {};
+      
       const includeClause = [{ model: Cozinha, as: 'tipoCozinha' }];
+
+      if (empresaId) {
+        whereClause.empresaId = empresaId;
+      }
 
       if (cozinhaId) whereClause.CozinhaId = cozinhaId;
       if (aberto === 'true') whereClause.aberto = true;
@@ -48,6 +55,7 @@ module.exports = {
         include: includeClause,
         order: orderClause,
       });
+
       res.json(restaurantes);
     } catch (error) {
       console.error("Erro ao listar restaurantes:", error);
@@ -55,6 +63,7 @@ module.exports = {
     }
   },
 
+  // Buscar um restaurante por ID
   async buscarPorId(req, res) {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id, {
@@ -73,13 +82,14 @@ module.exports = {
     }
   },
 
+  // Atualizar um restaurante
   async atualizar(req, res) {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id);
       if (!restaurante) {
         return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
-      if (req.user.tipo !== 'admin' && restaurante.empresaId !== req.user.id) {
+      if (req.user.permissoes && !req.user.permissoes.includes('MANAGE_SYSTEM') && restaurante.empresaId !== req.user.id) {
         return res.status(403).json({ erro: 'Você não tem permissão para editar este restaurante.' });
       }
       const { nome, cnpj, telefone, endereco, taxaFrete, ativo, aberto, imagemUrl, CozinhaId } = req.body;
@@ -105,13 +115,14 @@ module.exports = {
     }
   },
 
+  // Remover um restaurante
   async remover(req, res) {
     try {
       const restaurante = await Restaurante.findByPk(req.params.id);
       if (!restaurante) {
         return res.status(404).json({ erro: 'Restaurante não encontrado' });
       }
-      if (req.user.tipo !== 'admin') {
+      if (req.user.permissoes && !req.user.permissoes.includes('MANAGE_SYSTEM')) {
         return res.status(403).json({ erro: 'Apenas administradores podem remover restaurantes.' });
       }
       await restaurante.destroy();

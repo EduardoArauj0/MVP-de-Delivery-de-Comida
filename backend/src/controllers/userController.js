@@ -5,18 +5,22 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = {
-  // Cadastro
+  // Criar usuário (cliente ou empresa)
   async criar(req, res) {
     try {
-      const { nome, email, senha } = req.body;
+      const { nome, email, senha, tipo } = req.body;
       const userExists = await User.findOne({ where: { email } });
       if (userExists) return res.status(400).json({ erro: 'Email já cadastrado' });
 
       const user = await User.create({ nome, email, senha });
 
-      const clienteGroup = await Grupo.findOne({ where: { nome: 'Cliente' } });
-      if (clienteGroup) {
-        await user.addGrupo(clienteGroup);
+      const nomeGrupo = tipo === 'empresa' ? 'Empresa' : 'Cliente';
+      const grupo = await Grupo.findOne({ where: { nome: nomeGrupo } });
+      if (grupo) {
+        await user.addGrupo(grupo);
+      } else {
+        const clienteGroup = await Grupo.findOne({ where: { nome: 'Cliente' } });
+        if(clienteGroup) await user.addGrupo(clienteGroup);
       }
 
       res.status(201).json({ id: user.id, nome: user.nome, email: user.email });
@@ -25,7 +29,7 @@ module.exports = {
     }
   },
 
-  // Login
+  // Login do usuário
   async login(req, res) {
     try {
       const { email, senha } = req.body;
@@ -60,7 +64,7 @@ module.exports = {
     }
   },
 
-  // Listar usuários
+  // Listar todos os usuários
   async listar(req, res) {
     try {
       const users = await User.findAll({ 
@@ -73,7 +77,7 @@ module.exports = {
     }
   },
 
-  // Buscar por ID
+  // Buscar usuário por ID
   async buscarPorId(req, res) {
     try {
       const user = await User.findByPk(req.params.id, { 
@@ -87,12 +91,12 @@ module.exports = {
     }
   },
 
-  // Atualizar usuário
+  // Atualizar um usuário
   async atualizar(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
       if (!user) return res.status(404).json({ erro: 'Usuário não encontrado.' });
-
+      
       const canManageSystem = req.user.permissoes.includes('MANAGE_SYSTEM');
       if (req.user.id !== Number(req.params.id) && !canManageSystem) {
         return res.status(403).json({ erro: 'Você não tem permissão para modificar outro usuário' });
@@ -111,7 +115,7 @@ module.exports = {
     }
   },
 
-  // Remover usuário
+  // Remover um usuário
   async remover(req, res) {
     try {
       const user = await User.findByPk(req.params.id);
@@ -121,7 +125,7 @@ module.exports = {
       if (req.user.id !== Number(req.params.id) && !canManageSystem) {
         return res.status(403).json({ erro: 'Você não tem permissão para remover outro usuário' });
       }
-
+      
       await user.destroy();
       res.json({ mensagem: 'Usuário removido com sucesso' });
     } catch (error) {

@@ -1,0 +1,105 @@
+/* Container principal com layout de grid (duas colunas) */
+.login-container {
+  display: grid;
+  /* A coluna da imagem será maior que a do formulário (proporção ~60/40) */
+  grid-template-columns: 1.5fr 1fr; 
+  height: 100vh;
+  width: 100%;
+  background-color: #f8f9fa; /* Cor de fundo para a área da imagem */
+}
+
+/* Coluna da Imagem (Esquerda) */
+.login-image-section {
+  background-image: url('/login-background.png'); /* Verifique se o nome do arquivo está correto */
+  
+  /* Garante que a imagem inteira apareça, sem cortes */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Coluna do Formulário (Direita) */
+.login-form-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #F7F7F7;
+}
+
+.login-form-wrapper {
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Estilos refinados para logo, títulos e inputs */
+.login-form-wrapper .logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--bs-danger);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.login-form-wrapper h2 {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+.login-form-wrapper .subtitle {
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+.form-control-lg {
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+}
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Esconde a imagem em telas pequenas */
+@media (max-width: 991.98px) {
+  .login-container {
+    grid-template-columns: 1fr;
+    background-color: #fff; /* Fundo branco no mobile */
+  }
+  .login-image-section {
+    display: none;
+  }
+  .login-form-section {
+    min-height: 100vh;
+  }
+}
+
+/* Estilos para o seletor de tipo de usuário (sem alterações) */
+.user-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.user-type-selector .btn {
+  width: 100%;
+  font-weight: 500;
+  border: none;
+  transition: all 0.3s ease;
+}
+.user-type-selector .btn-light {
+  background-color: transparent;
+  color: #6c757d;
+}
+.user-type-selector .btn-danger {
+  background-color: var(--bs-danger);
+  color: white;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
