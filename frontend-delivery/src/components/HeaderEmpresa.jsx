@@ -11,45 +11,32 @@ export default function HeaderEmpresa() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-      <div className="container">
-        <Link className="navbar-brand fw-bold" to="/dashboard-empresa">
-          DeliveryAdmin
-        </Link>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNavEmpresa"
-          aria-controls="navbarNavEmpresa"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbarNavEmpresa">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link" to="/dashboard-empresa">
-                Meu Restaurante
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/pedidos-recebidos">
-                Pedidos Recebidos
-              </Link>
-            </li>
-          </ul>
-          <div className="d-flex align-items-center">
-            <span className="navbar-text me-3">
-              Olá, {user?.nome?.split(' ')[0]}
-            </span>
-            <button className="btn btn-outline-light" onClick={handleLogout}>
-              Sair
-            </button>
+    <header className="bg-white border-bottom shadow-sm sticky-top">
+      <div className="container-fluid">
+        <div className="container d-flex align-items-center justify-content-between py-2">
+          
+          <div className="d-flex align-items-center gap-4">
+            <Link to="/dashboard-empresa" className="navbar-brand fw-bold text-danger fs-4">DeliveryApp</Link>
+            <span className="badge bg-primary-subtle text-primary-emphasis rounded-pill">Painel da Empresa</span>
           </div>
+          
+          <div className="d-flex align-items-center gap-4">
+            <div className="dropdown">
+              <button className="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i className="bi bi-person-fill fs-4"></i>
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end">
+                <li className="dropdown-header">Olá, {user?.nome?.split(' ')[0]}</li>
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <button className="dropdown-item text-danger" onClick={handleLogout}>Sair</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

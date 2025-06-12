@@ -1,0 +1,11 @@
+.dashboard-container {
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 72px); /* 100% da altura da tela menos a altura do header */
+}
+
+/* Estilo para a lista de produtos */
+.produto-list-table {
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
