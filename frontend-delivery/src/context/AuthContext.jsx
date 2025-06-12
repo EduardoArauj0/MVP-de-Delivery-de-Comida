@@ -39,8 +39,15 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
   };
 
+  const updateUserContext = (updatedUserData) => {
+    const newUser = { ...user, ...updatedUserData };
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loadingAuth }}>
+    // Adiciona a nova função ao valor do provedor
+    <AuthContext.Provider value={{ user, token, login, logout, loadingAuth, updateUserContext }}>
       {children}
     </AuthContext.Provider>
   );

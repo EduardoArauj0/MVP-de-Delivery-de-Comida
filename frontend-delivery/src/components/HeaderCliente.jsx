@@ -22,7 +22,6 @@ export default function HeaderCliente() {
             <Link to="/" className="navbar-brand fw-bold text-danger fs-4">DeliveryApp</Link>
             <nav className="d-none d-lg-flex gap-3">
               <Link to="/" className="nav-link text-dark">Restaurantes</Link>
-              <Link to="/meus-pedidos" className="nav-link text-dark">Meus Pedidos</Link>
             </nav>
           </div>
           

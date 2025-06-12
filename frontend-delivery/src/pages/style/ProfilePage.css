@@ -1,0 +1,53 @@
+.profile-page-container {
+  background-color: #f8f9fa;
+}
+
+/* Estilo customizado para as abas */
+.profile-nav-tabs .nav-link {
+  color: #6c757d;
+  font-weight: 500;
+  border: none;
+  border-bottom: 2px solid transparent;
+}
+
+.profile-nav-tabs .nav-link.active {
+  color: var(--bs-danger);
+  border-bottom-color: var(--bs-danger);
+  background-color: transparent;
+}
+
+/* Card de endereço */
+.address-card {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.address-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.address-card-info strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.address-card-info small {
+  color: #6c757d;
+}
+
+.address-card-actions .btn {
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  color: #6c757d;
+}
+
+.address-card-actions .btn:hover {
+  color: var(--bs-danger);
+}
