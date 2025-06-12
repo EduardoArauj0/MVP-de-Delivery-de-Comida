@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import EsqueciSenhaPage from '../pages/EsqueciSenhaPage';
 import DashboardEmpresa from '../pages/DashboardEmpresa';
 import DashboardAdmin from '../pages/DashboardAdmin';
 import RestaurantePage from '../pages/RestaurantePage';
@@ -43,6 +44,7 @@ export const routes = createBrowserRouter([
   { path: '/', element: <HomePage /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
+  { path: '/esqueci-senha', element: <EsqueciSenhaPage /> },
   {
     path: '/dashboard-empresa',
     element: (

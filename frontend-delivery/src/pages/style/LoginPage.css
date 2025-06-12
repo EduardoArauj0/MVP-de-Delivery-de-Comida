@@ -1,18 +1,15 @@
 /* Container principal com layout de grid (duas colunas) */
 .login-container {
   display: grid;
-  /* A coluna da imagem será maior que a do formulário (proporção ~60/40) */
   grid-template-columns: 1.5fr 1fr; 
   height: 100vh;
   width: 100%;
-  background-color: #f8f9fa; /* Cor de fundo para a área da imagem */
+  background-color: #F7F7F7;
 }
 
 /* Coluna da Imagem (Esquerda) */
 .login-image-section {
-  background-image: url('/login-background.png'); /* Verifique se o nome do arquivo está correto */
-  
-  /* Garante que a imagem inteira apareça, sem cortes */
+  background-image: url('/login-background.png');  
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -68,7 +65,7 @@
 @media (max-width: 991.98px) {
   .login-container {
     grid-template-columns: 1fr;
-    background-color: #fff; /* Fundo branco no mobile */
+    background-color: #F7F7F7;
   }
   .login-image-section {
     display: none;
@@ -78,7 +75,7 @@
   }
 }
 
-/* Estilos para o seletor de tipo de usuário (sem alterações) */
+/* Estilos para o seletor de tipo de usuário */
 .user-type-selector {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -102,4 +99,26 @@
   background-color: var(--bs-danger);
   color: white;
   box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
+
+/* Estilos para a tela de confirmação */
+.success-state-container {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-icon {
+  font-size: 4rem;
+  color: var(--bs-success);
+  margin-bottom: 1.5rem;
+}
+
+.success-state-container h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.success-state-container p {
+  color: #6c757d;
+  margin-bottom: 2rem;
 }
