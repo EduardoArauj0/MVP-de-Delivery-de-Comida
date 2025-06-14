@@ -7,9 +7,7 @@ import DashboardAdmin from '../pages/DashboardAdmin';
 import RestaurantePage from '../pages/RestaurantePage';
 import CarrinhoPage from '../pages/CarrinhoPage';
 import PedidosClientePage from '../pages/PedidosClientePage';
-import PedidosRecebidosPage from '../pages/PedidosRecebidosPage';
 import HomePage from '../pages/HomePage';
-import ProdutoAdminPage from '../pages/admin/ProdutoAdminPage';
 import ProfilePage from '../pages/ProfilePage';
 import { useAuth } from '../hooks/useAuth';
 import { useHasPermission } from '../hooks/useHasPermission';
@@ -78,34 +76,10 @@ export const routes = createBrowserRouter([
     )
   },
   {
-    path: '/pedidos-recebidos',
-    element: (
-      <PrivateRoute permissoes={['MANAGE_ORDERS_COMPANY']}>
-        <PedidosRecebidosPage />
-      </PrivateRoute>
-    )
-  },
-  {
     path: '/perfil',
     element: (
       <PrivateRoute permissoes={['PLACE_ORDER']}>
         <ProfilePage />
-      </PrivateRoute>
-    )
-  },
-  {
-    path: '/produto/novo',
-    element: (
-      <PrivateRoute permissoes={['MANAGE_PRODUCTS']}>
-        <ProdutoAdminPage />
-      </PrivateRoute>
-    )
-  },
-  {
-    path: '/produto/:produtoId/editar',
-    element: (
-      <PrivateRoute permissoes={['MANAGE_PRODUCTS']}>
-        <ProdutoAdminPage />
       </PrivateRoute>
     )
   },

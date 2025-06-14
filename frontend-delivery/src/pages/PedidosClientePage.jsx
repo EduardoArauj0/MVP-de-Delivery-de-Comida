@@ -23,7 +23,7 @@ export default function PedidosClientePage() {
   const [selectedPedidoId, setSelectedPedidoId] = useState(null);
   const [openAccordion, setOpenAccordion] = useState(null);
 
-  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  const backendUrl = import.meta.env.VITE_API_URL;
 
   const buscarPedidos = async () => {
     if (!user) return;
@@ -60,6 +60,17 @@ export default function PedidosClientePage() {
 
   const toggleAccordion = (pedidoId) => {
     setOpenAccordion(openAccordion === pedidoId ? null : pedidoId);
+  };
+
+  const handleCancelarPedido = async (pedidoId) => {
+    if (window.confirm("Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.")) {
+      try {
+        await pedidoService.remover(pedidoId);
+        buscarPedidos();
+      } catch (err) {
+        setErro(err.response?.data?.erro || 'Erro ao cancelar o pedido.');
+      }
+    }
   };
 
   if (loading) {
@@ -144,13 +155,20 @@ export default function PedidosClientePage() {
 
                 <div className="order-card-footer">
                   <span className="order-total-price">Total: R$ {parseFloat(pedido.valorTotal).toFixed(2)}</span>
-                  {pedido.status === 'entregue' && (
-                    !pedido.avaliacaoFeita ? (
-                      <button className="btn btn-danger" onClick={() => handleShowModal(pedido.id)}>Avaliar Pedido</button>
-                    ) : (
-                      <button className="btn btn-success" disabled>Pedido Avaliado</button>
-                    )
-                  )}
+                  <div className="d-flex gap-2">
+                    {pedido.status === 'pendente' && (
+                      <button className="btn btn-outline-danger" onClick={() => handleCancelarPedido(pedido.id)}>
+                        Cancelar Pedido
+                      </button>
+                    )}
+                    {pedido.status === 'entregue' && (
+                      !pedido.avaliacaoFeita ? (
+                        <button className="btn btn-danger" onClick={() => handleShowModal(pedido.id)}>Avaliar Pedido</button>
+                      ) : (
+                        <button className="btn btn-success" disabled>Pedido Avaliado</button>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             )})
