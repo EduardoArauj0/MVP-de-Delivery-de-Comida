@@ -9,55 +9,8 @@ import pedidoService from '../services/pedidoService';
 import restauranteService from '../services/restauranteService';
 import enderecoService from '../services/enderecoService';
 import { useHasPermission } from '../hooks/useHasPermission';
+import SimulacaoPagamento from '../components/SimulacaoPagamento';
 import './style/CarrinhoPage.css';
-
-const CartaoFormSimulado = () => (
-  <div className="mt-3 p-3 bg-light rounded">
-    <h6 className="mb-3">Dados do Cartão (Simulação)</h6>
-    <div className="mb-2">
-      <label className="form-label small">Número do Cartão</label>
-      <input type="text" className="form-control" placeholder="0000 0000 0000 0000" readOnly disabled />
-    </div>
-    <div className="mb-2">
-      <label className="form-label small">Nome no Cartão</label>
-      <input type="text" className="form-control" placeholder="Seu Nome Completo" readOnly disabled />
-    </div>
-    <div className="row">
-      <div className="col-6">
-        <label className="form-label small">Validade</label>
-        <input type="text" className="form-control" placeholder="MM/AA" readOnly disabled />
-      </div>
-      <div className="col-6">
-        <label className="form-label small">CVV</label>
-        <input type="text" className="form-control" placeholder="123" readOnly disabled />
-      </div>
-    </div>
-  </div>
-);
-
-const PixDisplaySimulado = () => (
-  <div className="mt-3 p-3 bg-light rounded text-center">
-    <h6 className="mb-3">Pague com PIX</h6>
-    <img 
-      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PedidoSimuladoDeliveryApp" 
-      alt="QR Code PIX Simulado"
-      className="img-fluid mb-2"
-    />
-    <p className="small text-muted">Aponte a câmera do seu celular para o QR Code ou use o código abaixo.</p>
-    <div className="input-group">
-      <input type="text" className="form-control form-control-sm" value="chave-pix-copia-e-cola" readOnly disabled />
-      <button className="btn btn-sm btn-secondary" disabled>Copiar</button>
-    </div>
-  </div>
-);
-
-const TrocoParaForm = () => (
-    <div className="mt-3 p-3 bg-light rounded">
-        <h6 className="mb-2">Pagamento em Dinheiro</h6>
-        <label className="form-label small">Precisa de troco para quanto? (Opcional)</label>
-        <input type="text" className="form-control" placeholder="Ex: 50,00" />
-    </div>
-);
 
 export default function CarrinhoPage() {
   const { user } = useAuth();
@@ -80,29 +33,35 @@ export default function CarrinhoPage() {
   const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [enderecoEntregaId, setEnderecoEntregaId] = useState('');
   const [taxaFrete, setTaxaFrete] = useState(0);
+  const [isRestauranteAberto, setIsRestauranteAberto] = useState(true);
   const [valorTotalPedido, setValorTotalPedido] = useState(0);
   const [erroCheckout, setErroCheckout] = useState('');
   const [sucessoCheckout, setSucessoCheckout] = useState('');
+  
   const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState('');
 
   const isCliente = useHasPermission(['PLACE_ORDER']);
   const backendUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    async function buscarTaxaFrete() {
+    async function buscarDadosRestaurante() {
       if (cartRestaurantId) {
         try {
           const res = await restauranteService.buscarPorId(cartRestaurantId);
-          setTaxaFrete(parseFloat(res.data.taxaFrete) || 0);
+          const rest = res.data;
+          setTaxaFrete(parseFloat(rest.taxaFrete) || 0);
+          setIsRestauranteAberto(rest.aberto);
         } catch (error) {
-          console.error("Erro ao buscar taxa de frete", error);
+          console.error("Erro ao buscar dados do restaurante", error);
           setTaxaFrete(0);
+          setIsRestauranteAberto(false);
         }
       } else {
         setTaxaFrete(0);
+        setIsRestauranteAberto(true);
       }
     }
-    buscarTaxaFrete();
+    buscarDadosRestaurante();
   }, [cartRestaurantId]);
 
   useEffect(() => {
@@ -271,13 +230,20 @@ export default function CarrinhoPage() {
                           </select>
                       </div>
 
-                      {metodoPagamentoSelecionado.toLowerCase().includes('cartão') && <CartaoFormSimulado />}
-                      {metodoPagamentoSelecionado.toLowerCase().includes('pix') && <PixDisplaySimulado />}
-                      {metodoPagamentoSelecionado.toLowerCase().includes('dinheiro') && <TrocoParaForm />}
+                      <SimulacaoPagamento metodo={metodoPagamentoSelecionado} />
                     </>
                 )}
-                <button className="btn btn-danger w-100 btn-lg mt-3" onClick={handleFinalizarPedido} disabled={loadingCart || (user && (!formaPagamentoId || !enderecoEntregaId))}>
-                  {user ? 'Finalizar Pedido' : 'Fazer Login para Finalizar'}
+                {!isRestauranteAberto && user && (
+                    <div className="alert alert-danger mt-3">
+                        O restaurante deste pedido está fechado. Não é possível finalizar a compra.
+                    </div>
+                )}
+                <button 
+                  className="btn btn-danger w-100 btn-lg mt-2" 
+                  onClick={handleFinalizarPedido} 
+                  disabled={loadingCart || (user && (!formaPagamentoId || !enderecoEntregaId)) || !isRestauranteAberto}
+                >
+                  {user ? (isRestauranteAberto ? 'Finalizar Pedido' : 'Restaurante Fechado') : 'Fazer Login para Finalizar'}
                 </button>
               </div>
             </div>

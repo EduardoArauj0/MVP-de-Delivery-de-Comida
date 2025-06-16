@@ -28,6 +28,12 @@ module.exports = {
       }
       const restaurante = await Restaurante.findByPk(restauranteId, { transaction: t });
       if (!restaurante) throw new Error('Restaurante não encontrado.');
+
+      if (!restaurante.aberto) {
+          await t.rollback();
+          return res.status(400).json({ erro: 'Este restaurante está fechado e não está aceitando pedidos no momento.' });
+      }
+
       const produtoIds = itens.map(item => item.produtoId);
       const produtosDoBanco = await Produto.findAll({ where: { id: produtoIds }, transaction: t });
       let subtotal = 0;

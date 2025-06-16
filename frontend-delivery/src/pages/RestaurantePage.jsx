@@ -8,7 +8,7 @@ import HeaderPublico from '../components/HeaderPublico';
 import './style/RestaurantePage.css';
 
 // Card de Produto no Carrossel
-const ProdutoCard = ({ produto, onAddToCart, backendUrl }) => {
+const ProdutoCard = ({ produto, onAddToCart, backendUrl, isRestauranteAberto }) => {
   const imageUrl = produto.imagem?.startsWith('/') 
     ? `${backendUrl}${produto.imagem}` 
     : (produto.imagem);
@@ -22,14 +22,16 @@ const ProdutoCard = ({ produto, onAddToCart, backendUrl }) => {
       </div>
       <div className="produto-card-footer">
         <span className="price">R$ {parseFloat(produto.preco).toFixed(2)}</span>
-        <button className="btn btn-sm btn-danger" onClick={() => onAddToCart(produto)}>Adicionar</button>
+        <button className="btn btn-sm btn-danger" onClick={() => onAddToCart(produto)} disabled={!isRestauranteAberto}>
+          {isRestauranteAberto ? 'Adicionar' : 'Fechado'}
+        </button>
       </div>
     </div>
   );
 };
 
 // Carrossel de Produtos
-const ProdutoCarrossel = ({ title, produtos, onAddToCart, backendUrl }) => {
+const ProdutoCarrossel = ({ title, produtos, onAddToCart, backendUrl, isRestauranteAberto }) => {
   const carrosselRef = useRef(null);
 
   const scroll = (scrollOffset) => {
@@ -53,7 +55,7 @@ const ProdutoCarrossel = ({ title, produtos, onAddToCart, backendUrl }) => {
       </div>
       <div className="carrossel-container" ref={carrosselRef}>
         {produtos.map(prod => (
-          <ProdutoCard key={prod.id} produto={prod} onAddToCart={onAddToCart} backendUrl={backendUrl} />
+          <ProdutoCard key={prod.id} produto={prod} onAddToCart={onAddToCart} backendUrl={backendUrl} isRestauranteAberto={isRestauranteAberto} />
         ))}
       </div>
     </div>
@@ -140,6 +142,13 @@ export default function RestaurantePage() {
           <button className="btn btn-outline-secondary ms-auto" onClick={handleShowDetalhes}>Ver mais</button>
         </header>
 
+        {!restaurante.aberto && (
+            <div className="alert alert-warning text-center my-4" role="alert">
+                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                Este restaurante está fechado no momento e não aceita novos pedidos.
+            </div>
+        )}
+
         <section className="restaurante-actions">
           <div className="input-group w-50">
             <span className="input-group-text bg-light border-end-0">
@@ -174,6 +183,7 @@ export default function RestaurantePage() {
                 produtos={produtosAgrupados[categoria]}
                 onAddToCart={handleAdicionarAoCarrinho}
                 backendUrl={backendUrl}
+                isRestauranteAberto={restaurante.aberto}
               />
             ))
           ) : (
