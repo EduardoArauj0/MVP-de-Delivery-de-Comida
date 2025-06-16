@@ -11,6 +11,54 @@ import enderecoService from '../services/enderecoService';
 import { useHasPermission } from '../hooks/useHasPermission';
 import './style/CarrinhoPage.css';
 
+const CartaoFormSimulado = () => (
+  <div className="mt-3 p-3 bg-light rounded">
+    <h6 className="mb-3">Dados do Cartão (Simulação)</h6>
+    <div className="mb-2">
+      <label className="form-label small">Número do Cartão</label>
+      <input type="text" className="form-control" placeholder="0000 0000 0000 0000" readOnly disabled />
+    </div>
+    <div className="mb-2">
+      <label className="form-label small">Nome no Cartão</label>
+      <input type="text" className="form-control" placeholder="Seu Nome Completo" readOnly disabled />
+    </div>
+    <div className="row">
+      <div className="col-6">
+        <label className="form-label small">Validade</label>
+        <input type="text" className="form-control" placeholder="MM/AA" readOnly disabled />
+      </div>
+      <div className="col-6">
+        <label className="form-label small">CVV</label>
+        <input type="text" className="form-control" placeholder="123" readOnly disabled />
+      </div>
+    </div>
+  </div>
+);
+
+const PixDisplaySimulado = () => (
+  <div className="mt-3 p-3 bg-light rounded text-center">
+    <h6 className="mb-3">Pague com PIX</h6>
+    <img 
+      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PedidoSimuladoDeliveryApp" 
+      alt="QR Code PIX Simulado"
+      className="img-fluid mb-2"
+    />
+    <p className="small text-muted">Aponte a câmera do seu celular para o QR Code ou use o código abaixo.</p>
+    <div className="input-group">
+      <input type="text" className="form-control form-control-sm" value="chave-pix-copia-e-cola" readOnly disabled />
+      <button className="btn btn-sm btn-secondary" disabled>Copiar</button>
+    </div>
+  </div>
+);
+
+const TrocoParaForm = () => (
+    <div className="mt-3 p-3 bg-light rounded">
+        <h6 className="mb-2">Pagamento em Dinheiro</h6>
+        <label className="form-label small">Precisa de troco para quanto? (Opcional)</label>
+        <input type="text" className="form-control" placeholder="Ex: 50,00" />
+    </div>
+);
+
 export default function CarrinhoPage() {
   const { user } = useAuth();
   const {
@@ -35,9 +83,9 @@ export default function CarrinhoPage() {
   const [valorTotalPedido, setValorTotalPedido] = useState(0);
   const [erroCheckout, setErroCheckout] = useState('');
   const [sucessoCheckout, setSucessoCheckout] = useState('');
-  
-  const isCliente = useHasPermission(['PLACE_ORDER']);
+  const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState('');
 
+  const isCliente = useHasPermission(['PLACE_ORDER']);
   const backendUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -80,6 +128,14 @@ export default function CarrinhoPage() {
     }
     carregarDadosCheckout();
   }, [user, isCliente]);
+  
+  const handlePaymentChange = (e) => {
+    const selectedId = e.target.value;
+    setFormaPagamentoId(selectedId);
+    
+    const selectedPayment = formasPagamento.find(fp => fp.id === parseInt(selectedId));
+    setMetodoPagamentoSelecionado(selectedPayment ? selectedPayment.nome : '');
+  };
 
   const handleFinalizarPedido = async () => {
     if (!user) {
@@ -209,14 +265,18 @@ export default function CarrinhoPage() {
                       </div>
                       <div className="mb-3">
                           <label htmlFor="formaPagamento" className="form-label fw-bold">Forma de Pagamento</label>
-                          <select id="formaPagamento" className="form-select" value={formaPagamentoId} onChange={e => setFormaPagamentoId(e.target.value)} required>
+                          <select id="formaPagamento" className="form-select" value={formaPagamentoId} onChange={handlePaymentChange} required>
                             <option value="">Selecione...</option>
                             {formasPagamento.map(fp => <option key={fp.id} value={fp.id}>{fp.nome}</option>)}
                           </select>
                       </div>
+
+                      {metodoPagamentoSelecionado.toLowerCase().includes('cartão') && <CartaoFormSimulado />}
+                      {metodoPagamentoSelecionado.toLowerCase().includes('pix') && <PixDisplaySimulado />}
+                      {metodoPagamentoSelecionado.toLowerCase().includes('dinheiro') && <TrocoParaForm />}
                     </>
                 )}
-                <button className="btn btn-danger w-100 btn-lg mt-2" onClick={handleFinalizarPedido} disabled={loadingCart || (user && (!formaPagamentoId || !enderecoEntregaId))}>
+                <button className="btn btn-danger w-100 btn-lg mt-3" onClick={handleFinalizarPedido} disabled={loadingCart || (user && (!formaPagamentoId || !enderecoEntregaId))}>
                   {user ? 'Finalizar Pedido' : 'Fazer Login para Finalizar'}
                 </button>
               </div>
