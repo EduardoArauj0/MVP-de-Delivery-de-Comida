@@ -4,32 +4,18 @@ import EnderecoForm from '../components/EnderecoForm';
 import { useAuth } from '../hooks/useAuth';
 import enderecoService from '../services/enderecoService';
 import userService from '../services/userService';
-import { Modal } from 'bootstrap';
+import Modal from '../components/Modal';
 import './style/ProfilePage.css';
 
 export default function ProfilePage() {
   const { user, updateUserContext } = useAuth();
-  
-  // Estados para o modal de endereço
+  const [isEnderecoModalOpen, setIsEnderecoModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [enderecos, setEnderecos] = useState([]);
   const [editingEndereco, setEditingEndereco] = useState(null);
-  const [enderecoModal, setEnderecoModal] = useState(null);
-
-  // Estados para o modal de dados do usuário
-  const [userModal, setUserModal] = useState(null);
   const [userData, setUserData] = useState({ nome: user?.nome || '', email: user?.email || '', senha: '' });
   const [feedback, setFeedback] = useState({ message: '', type: '' });
-  
   const [activeTab, setActiveTab] = useState('enderecos');
-
-  // Inicialização dos modais
-  useEffect(() => {
-    const enderecoModalEl = document.getElementById('enderecoModal');
-    if (enderecoModalEl) setEnderecoModal(new Modal(enderecoModalEl));
-
-    const userModalEl = document.getElementById('userModal');
-    if (userModalEl) setUserModal(new Modal(userModalEl));
-  }, []);
 
   const fetchEnderecos = async () => {
     try {
@@ -46,24 +32,27 @@ export default function ProfilePage() {
     }
   }, [user]);
   
-  // Funções para o modal de endereço
   const handleEnderecoSave = () => {
-    if (enderecoModal) enderecoModal.hide();
+    setIsEnderecoModalOpen(false);
     setEditingEndereco(null);
     fetchEnderecos();
   };
+
   const handleEditEndereco = (endereco) => {
     setEditingEndereco(endereco);
-    if (enderecoModal) enderecoModal.show();
+    setIsEnderecoModalOpen(true);
   };
+
   const handleAddNewEndereco = () => {
     setEditingEndereco(null);
-    if (enderecoModal) enderecoModal.show();
+    setIsEnderecoModalOpen(true);
   };
+
   const handleCancelEndereco = () => {
-    if (enderecoModal) enderecoModal.hide();
+    setIsEnderecoModalOpen(false);
     setEditingEndereco(null);
   };
+
   const handleRemoveEndereco = async (id) => {
     if (window.confirm("Tem certeza que deseja remover este endereço?")) {
       await enderecoService.remover(id);
@@ -71,15 +60,16 @@ export default function ProfilePage() {
     }
   };
 
-  // Funções para o modal de dados do usuário
   const handleShowUserModal = () => {
     setUserData({ nome: user.nome, email: user.email, senha: '' });
     setFeedback({ message: '', type: '' });
-    if (userModal) userModal.show();
+    setIsUserModalOpen(true);
   };
+  
   const handleUserFormChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
+  
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     const dataToUpdate = {
@@ -95,7 +85,7 @@ export default function ProfilePage() {
       updateUserContext(response.data);
       setFeedback({ message: 'Dados atualizados com sucesso!', type: 'success' });
       setTimeout(() => {
-        if (userModal) userModal.hide();
+        setIsUserModalOpen(false);
       }, 1500);
     } catch (error) {
       setFeedback({ message: error.response?.data?.erro || 'Erro ao atualizar dados.', type: 'danger' });
@@ -166,56 +156,45 @@ export default function ProfilePage() {
       </div>
 
       {/* Modal para Endereço */}
-      <div className="modal fade" id="enderecoModal" tabIndex="-1">
-        <div className="modal-dialog modal-lg modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{editingEndereco ? 'Editar Endereço' : 'Adicionar Novo Endereço'}</h5>
-              <button type="button" className="btn-close" onClick={handleCancelEndereco}></button>
-            </div>
-            <div className="modal-body">
-              <EnderecoForm
-                initialData={editingEndereco}
-                onSave={handleEnderecoSave}
-                onCancel={handleCancelEndereco}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <Modal 
+        show={isEnderecoModalOpen} 
+        onClose={handleCancelEndereco}
+        title={editingEndereco ? 'Editar Endereço' : 'Adicionar Novo Endereço'}
+        size="lg"
+      >
+        <EnderecoForm
+          initialData={editingEndereco}
+          onSave={handleEnderecoSave}
+          onCancel={handleCancelEndereco}
+        />
+      </Modal>
 
-      {/* Modal para Dados do Usuário */}
-      <div className="modal fade" id="userModal" tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Editar Dados Pessoais</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div className="modal-body">
-              {feedback.message && <div className={`alert alert-${feedback.type}`}>{feedback.message}</div>}
-              <form onSubmit={handleUserUpdate}>
-                <div className="mb-3">
-                  <label htmlFor="nome" className="form-label">Nome</label>
-                  <input type="text" id="nome" name="nome" className="form-control form-control-lg" value={userData.nome} onChange={handleUserFormChange} required />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
-                  <input type="email" id="email" name="email" className="form-control form-control-lg" value={userData.email} onChange={handleUserFormChange} required />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="senha" className="form-label">Nova Senha (deixe em branco para não alterar)</label>
-                  <input type="password" id="senha" name="senha" className="form-control form-control-lg" value={userData.senha} onChange={handleUserFormChange} />
-                </div>
-                <div className="modal-footer border-0 pt-4">
-                  <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                  <button type="submit" className="btn btn-danger">Salvar Alterações</button>
-                </div>
-              </form>
-            </div>
+      {/* Modal para Dados */}
+      <Modal 
+        show={isUserModalOpen} 
+        onClose={() => setIsUserModalOpen(false)}
+        title="Editar Dados Pessoais"
+      >
+        {feedback.message && <div className={`alert alert-${feedback.type}`}>{feedback.message}</div>}
+        <form onSubmit={handleUserUpdate}>
+          <div className="mb-3">
+            <label htmlFor="nome" className="form-label">Nome</label>
+            <input type="text" id="nome" name="nome" className="form-control" value={userData.nome} onChange={handleUserFormChange} required />
           </div>
-        </div>
-      </div>
+          <div className="mb-3">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input type="email" id="email" name="email" className="form-control" value={userData.email} onChange={handleUserFormChange} required />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="senha" className="form-label">Nova Senha (deixe em branco para não alterar)</label>
+            <input type="password" id="senha" name="senha" className="form-control" value={userData.senha} onChange={handleUserFormChange} />
+          </div>
+          <div className="modal-footer border-0 pt-4">
+            <button type="button" className="btn btn-secondary" onClick={() => setIsUserModalOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn btn-danger">Salvar Alterações</button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
