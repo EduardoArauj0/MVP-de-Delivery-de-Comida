@@ -50,8 +50,13 @@ export default function DashboardStats() {
       }
     };
 
-    fetchStats();
-  }, []);
+    fetchStats(); 
+
+    const intervalId = setInterval(fetchStats, 30000);
+
+    return () => clearInterval(intervalId);
+    
+  }, []); 
 
   if (loading) {
     return <div className="text-center"><div className="spinner-border"></div></div>;

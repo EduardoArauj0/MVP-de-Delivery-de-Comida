@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import pedidoService from '../services/pedidoService';
+import ConfirmModal from '../components/ConfirmModal';
 
 const statusStyles = {
   pendente: { bg: 'secondary', text: 'Pendente' },
@@ -13,6 +14,8 @@ export default function PedidosRecebidosContent() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemParaAtualizar, setItemParaAtualizar] = useState(null); 
 
   const buscarPedidos = useCallback(async () => {
     try {
@@ -32,22 +35,34 @@ export default function PedidosRecebidosContent() {
     buscarPedidos();
   }, [buscarPedidos]);
 
-  async function atualizarStatus(pedidoId, novoStatus) {
-    if (!window.confirm(`Tem certeza que deseja alterar o status para "${novoStatus}"?`)) return;
+  const handleOpenModal = (pedidoId, novoStatus) => {
+    setItemParaAtualizar({ id: pedidoId, status: novoStatus });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setItemParaAtualizar(null);
+    setIsModalOpen(false);
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!itemParaAtualizar) return;
     try {
-      await pedidoService.atualizarStatus(pedidoId, { status: novoStatus });
+      await pedidoService.atualizarStatus(itemParaAtualizar.id, { status: itemParaAtualizar.status });
       buscarPedidos();
     } catch(err) {
       console.error(err);
       alert(err.response?.data?.erro || 'Erro ao atualizar status');
+    } finally {
+      handleCloseModal();
     }
-  }
+  };
 
   const RenderAction = ({ pedido }) => {
     switch (pedido.status) {
-      case 'pendente': return <button className="btn btn-sm btn-success" onClick={() => atualizarStatus(pedido.id, 'em preparo')}>Iniciar Preparo</button>;
-      case 'em preparo': return <button className="btn btn-sm btn-info text-white" onClick={() => atualizarStatus(pedido.id, 'a caminho')}>Enviar Pedido</button>;
-      case 'a caminho': return <button className="btn btn-sm btn-primary" onClick={() => atualizarStatus(pedido.id, 'entregue')}>Finalizar Entrega</button>;
+      case 'pendente': return <button className="btn btn-sm btn-success" onClick={() => handleOpenModal(pedido.id, 'em preparo')}>Iniciar Preparo</button>;
+      case 'em preparo': return <button className="btn btn-sm btn-info text-white" onClick={() => handleOpenModal(pedido.id, 'a caminho')}>Enviar Pedido</button>;
+      case 'a caminho': return <button className="btn btn-sm btn-primary" onClick={() => handleOpenModal(pedido.id, 'entregue')}>Finalizar Entrega</button>;
       default: return null;
     }
   };
@@ -94,7 +109,7 @@ export default function PedidosRecebidosContent() {
                 <div className="d-flex gap-2">
                   <RenderAction pedido={pedido} />
                   {pedido.status !== 'cancelado' && pedido.status !== 'entregue' && (
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => atualizarStatus(pedido.id, 'cancelado')}>Cancelar</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleOpenModal(pedido.id, 'cancelado')}>Cancelar</button>
                   )}
                 </div>
               </div>
@@ -102,6 +117,19 @@ export default function PedidosRecebidosContent() {
           )
         })
       )}
+
+      <ConfirmModal
+        show={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmUpdate}
+        title="Confirmar Alteração de Status"
+        confirmText="Sim, Alterar"
+      >
+        <p>
+          Tem certeza que deseja alterar o status do pedido para 
+          <strong> "{itemParaAtualizar?.status}"</strong>?
+        </p>
+      </ConfirmModal>
     </div>
   );
 }
