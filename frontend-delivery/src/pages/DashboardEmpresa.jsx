@@ -8,6 +8,7 @@ import ProdutoList from '../components/ProdutoList';
 import ProdutoForm from '../components/ProdutoForm';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal'
+import PedidosRecebidosContent from './PedidosRecebidosPage';
 import './style/DashboardEmpresa.css';
 
 export default function DashboardEmpresa() {
@@ -88,7 +89,7 @@ export default function DashboardEmpresa() {
               <div className="tab-content p-4 bg-white rounded shadow-sm">
                 {activeTab === 'restaurante' && (<div><div className="d-flex justify-content-between align-items-center mb-3"><h4 className="mb-0">Dados do Estabelecimento</h4><button className="btn btn-outline-primary" onClick={handleShowRestauranteModal}>Editar Dados</button></div><hr/><p><strong>CNPJ:</strong> {restaurante.cnpj}</p><p><strong>Endereço:</strong> {restaurante.endereco}</p><p><strong>Telefone:</strong> {restaurante.telefone}</p><p><strong>Taxa de Entrega:</strong> R$ {parseFloat(restaurante.taxaFrete).toFixed(2)}</p></div>)}
                 {activeTab === 'cardapio' && <ProdutoList produtos={produtos} onUpdate={fetchDados} onAddProduto={() => handleShowProdutoModal(null)} onEditProduto={handleShowProdutoModal} onConfirmarRemocao={handleAbrirConfirmacaoRemocao} />}
-                {activeTab === 'pedidos' && <PedidosRecebidosTab />}
+                {activeTab === 'pedidos' && <PedidosRecebidosContent />}
               </div>
             </>
           )}
