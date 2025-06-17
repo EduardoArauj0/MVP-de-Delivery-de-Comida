@@ -13,7 +13,7 @@ module.exports = {
   async criar(req, res) {
     const t = await sequelize.transaction();
     try {
-      const { clienteId, restauranteId, formaPagamentoId, itens, enderecoEntrega } = req.body;
+      const { clienteId, restauranteId, formaPagamentoId, itens, enderecoEntrega, observacao } = req.body;
       if(req.user.id !== clienteId) {
           await t.rollback();
           return res.status(403).json({ erro: 'Você só pode criar pedidos para si mesmo.' });
@@ -47,7 +47,7 @@ module.exports = {
       const codigoPedido = `BR${Date.now()}${uuidv4().substring(0, 4).toUpperCase()}`;
       const pedido = await Pedido.create({
         codigo: codigoPedido, clienteId, RestauranteId: restauranteId, formaPagamentoId,
-        enderecoEntrega, subtotal, taxaFrete, valorTotal, status: 'pendente'
+        enderecoEntrega, subtotal, taxaFrete, valorTotal, status: 'pendente', observacao
       }, { transaction: t });
       const itensParaCriar = itens.map(item => {
         const produtoCorrespondente = produtosDoBanco.find(p => p.id === item.produtoId);

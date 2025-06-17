@@ -30,6 +30,10 @@ const Pedido = sequelize.define('Pedido', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  observacao: {
+    type: DataTypes.STRING,      
+    allowNull: true,
+  },
   dataConfirmacao: {
     type: DataTypes.DATE,
     allowNull: true,

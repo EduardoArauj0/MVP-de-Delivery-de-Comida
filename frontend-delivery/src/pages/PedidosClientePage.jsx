@@ -135,6 +135,14 @@ export default function PedidosClientePage() {
                       </h2>
                       <div className={`accordion-collapse collapse ${openAccordion === pedido.id ? 'show' : ''}`}>
                         <div className="accordion-body px-0 pt-3">
+                          {pedido.observacao && (
+                              <>
+                                  <div className="alert alert-light p-2 small">
+                                      <strong>Sua observação:</strong> {pedido.observacao}
+                                  </div>
+                                  <hr className="my-2"/>
+                              </>
+                          )}
                           {pedido.itensDoPedido.map(item => (
                             <div className="order-item" key={item.id}>
                               <span className="order-item-quantity">{item.quantidade}x</span>

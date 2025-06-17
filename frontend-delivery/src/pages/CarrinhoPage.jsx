@@ -39,6 +39,7 @@ export default function CarrinhoPage() {
   const [sucessoCheckout, setSucessoCheckout] = useState('');
   
   const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState('');
+  const [observacao, setObservacao] = useState('');
 
   const isCliente = useHasPermission(['PLACE_ORDER']);
   const backendUrl = import.meta.env.VITE_API_URL;
@@ -122,6 +123,7 @@ export default function CarrinhoPage() {
         formaPagamentoId: parseInt(formaPagamentoId),
         itens: cartItems.map(item => ({ produtoId: item.Produto.id, quantidade: item.quantidade })),
         enderecoEntrega: enderecoString,
+        observacao: observacao,
       });
 
       setSucessoCheckout('Pedido realizado com sucesso! Você será redirecionado...');
@@ -231,8 +233,21 @@ export default function CarrinhoPage() {
                       </div>
 
                       <SimulacaoPagamento metodo={metodoPagamentoSelecionado} />
+
+                      <div className="mb-3 mt-3">
+                        <label htmlFor="observacao" className="form-label fw-bold">Observações</label>
+                        <textarea 
+                          id="observacao"
+                          className="form-control"
+                          rows="3"
+                          placeholder="Ex: sem cebola, ponto da carne mal passado, etc."
+                          value={observacao}
+                          onChange={(e) => setObservacao(e.target.value)}
+                        ></textarea>
+                      </div>
                     </>
                 )}
+                
                 {!isRestauranteAberto && user && (
                     <div className="alert alert-danger mt-3">
                         O restaurante deste pedido está fechado. Não é possível finalizar a compra.
